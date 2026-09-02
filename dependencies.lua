@@ -1,2 +1,2 @@
-require 'src.index'
 require 'libs.index'
+require 'src.index'
