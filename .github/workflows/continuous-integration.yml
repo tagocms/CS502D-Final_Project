@@ -5,7 +5,7 @@ on:
     branches:
       - main
 jobs:
-  sile:
+  Run-Busted-Tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
