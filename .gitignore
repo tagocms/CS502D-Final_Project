@@ -1,0 +1,8 @@
+## Lua rocks
+/luarocks
+/lua
+/lua_modules
+/.luarocks
+
+## Local IDE files
+/.vscode
