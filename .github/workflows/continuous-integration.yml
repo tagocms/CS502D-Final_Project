@@ -1,0 +1,14 @@
+name: Busted (Tests) CI workflow
+run-name: ${{ github.actor }} is running ${{ github.workflow }} on ${{ github.ref }}
+on:
+  pull_request:
+    branches:
+      - main
+jobs:
+  Run-Busted-Tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Run Busted
+        uses: lunarmodules/busted@v2.3.0
