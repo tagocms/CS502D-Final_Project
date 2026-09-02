@@ -1,0 +1,1 @@
+Push = require 'libs.push-master.push'
