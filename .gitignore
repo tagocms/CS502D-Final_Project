@@ -1,2 +1,5 @@
 ## Local IDE files
 /.vscode
+
+## OS generated files
+.DS_Store
