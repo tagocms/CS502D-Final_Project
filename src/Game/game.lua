@@ -4,7 +4,7 @@ local windowWidth, windowHeight = 1080, 720
 local Game = {}
 
 function Game:init()
-    
+    self.gameMap = Sti('src/maps/CastleOutside.lua')
     
     Push:setupScreen(gameWidth, gameHeight, windowWidth, windowHeight, {fullscreen = false})
 end
@@ -15,6 +15,7 @@ end
 
 function Game:draw()
     Push:start()
+    self.gameMap:draw()
     love.graphics.print("Hello, world!", gameWidth / 2, gameHeight / 2)
     Push:finish()
 end
