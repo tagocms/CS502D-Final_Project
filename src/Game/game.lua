@@ -19,7 +19,7 @@ function Game:init()
     }
     
     self.camera = Camera()
-    self.cameraPosition = {x = gameWidth / 2, y = gameHeight / 2}
+    self.cameraPosition = {x = windowWidth / 2, y = windowHeight / 2}
 end
 
 function Game:update(dt)
