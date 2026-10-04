@@ -26,5 +26,8 @@ jobs:
         run: luarocks --lua-version 5.1 --local install busted
       - name: Run Busted
         env:
-          SDL_AUDIODRIVER: dummy # runner has no sound card; avoids ALSA errors
+          # Runner has no sound card. LÖVE uses OpenAL directly (not SDL audio),
+          # so select OpenAL's null backend to avoid the ALSA errors.
+          ALSOFT_DRIVERS: "null"
+          SDL_AUDIODRIVER: dummy
         run: xvfb-run -a ./test.sh src/
