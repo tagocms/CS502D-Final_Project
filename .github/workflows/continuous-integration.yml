@@ -10,11 +10,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Install LÖVE, LuaJIT, LuaRocks and Xvfb (cached)
-        uses: awalsh128/cache-apt-pkgs-action@v1
-        with:
-          packages: love luajit libluajit-5.1-dev luarocks xvfb
-          version: 1.0
+      - name: Install LÖVE, LuaJIT, LuaRocks and Xvfb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y love luajit libluajit-5.1-dev luarocks xvfb
       - name: Cache Busted (LuaRocks tree)
         id: luarocks-cache
         uses: actions/cache@v4
