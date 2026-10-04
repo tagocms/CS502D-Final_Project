@@ -10,11 +10,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Install LÖVE, LuaJIT, LuaRocks and Xvfb
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y love luajit libluajit-5.1-dev luarocks xvfb
+      - name: Install LÖVE, LuaJIT, LuaRocks and Xvfb (cached)
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: love luajit libluajit-5.1-dev luarocks xvfb
+          version: 1.0
+      - name: Cache Busted (LuaRocks tree)
+        id: luarocks-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.luarocks
+          key: luarocks-busted-${{ runner.os }}-lua5.1-v1
       - name: Install Busted (Lua 5.1, same runtime as LÖVE)
+        if: steps.luarocks-cache.outputs.cache-hit != 'true'
         run: luarocks --lua-version 5.1 --local install busted
       - name: Run Busted
+        env:
+          SDL_AUDIODRIVER: dummy # runner has no sound card; avoids ALSA errors
         run: xvfb-run -a ./test.sh src/
