@@ -1,6 +1,6 @@
 local windowWidth, windowHeight = 1080, 720
 
-local Game = {}
+Game = Class{}
 
 function Game:init()
     love.window.setMode(windowWidth, windowHeight, {
@@ -11,6 +11,8 @@ function Game:init()
     love.window.setTitle("Age of Bandits")
     -- TODO: Not the permanent icon
     love.window.setIcon(love.image.newImageData("sprites/cursor/mouse_icon1-SwordPointer.png"))
+
+    self:clearKeyDownAndPressed()
 
     self.gameMap = Sti('src/maps/CastleOutside.lua')
     self.mapSize = {
@@ -48,24 +50,39 @@ function Game:init()
     self.player.body:setFixedRotation(true)
     self.player.shape = love.physics.newRectangleShape(self.player.sprite:getWidth(), self.player.sprite:getHeight())
     love.physics.newFixture(self.player.body, self.player.shape)
-
 end
 
 function Game:update(dt)
+    self:listenToKeyDown()
+    self:handleKeyPressed()
+
+    self:handlePlayerMovement()
+    self:handleCameraMovement()
+
+    self:updatePhysicsWorldAndPlayerPosition(dt)
+
+    self:clearKeyDownAndPressed()
+end
+
+function Game:handlePlayerMovement()
     local xVelocity, yVelocity = 0, 0
-    if love.keyboard.isDown("w") then
+    if self:isDown("up") then
         yVelocity = yVelocity -self.player.speed
     end
-     if love.keyboard.isDown("s") then
+     if self:isDown("down") then
         yVelocity = yVelocity + self.player.speed
      end
-    if love.keyboard.isDown("a") then
+    if self:isDown("left") then
         xVelocity = xVelocity - self.player.speed
     end
-    if love.keyboard.isDown("d") then
+    if self:isDown("right") then
         xVelocity = xVelocity + self.player.speed
     end
 
+    self.player.body:setLinearVelocity(xVelocity, yVelocity)
+end
+
+function Game:handleCameraMovement()
     self.camera:lookAt(self.player.x, self.player.y)
 
     local screenSize = {
@@ -92,12 +109,16 @@ function Game:update(dt)
     if self.camera.y > (self.mapSize.height - screenSize.height / 2) then
         self.camera.y = (self.mapSize.height - screenSize.height / 2)
     end
+end
 
-    self.player.body:setLinearVelocity(xVelocity, yVelocity)
-    self.world:update(dt)
-
+function Game:setPlayerPositionToPlayerBodyPosition()
     self.player.x = self.player.body:getX()
     self.player.y = self.player.body:getY()
+end
+
+function Game:updatePhysicsWorldAndPlayerPosition(dt)
+    self.world:update(dt)
+    self:setPlayerPositionToPlayerBodyPosition()
 end
 
 function Game:draw()
@@ -111,10 +132,62 @@ function Game:draw()
     self.camera:detach()
 end
 
+
+-- Input handling
 function Game:keypressed(key)
-    if key == 'escape' then
+    self:setKeyPressed(key)
+end
+
+function Game:setKeyDown(key)
+    self.isKeyDown[key] = true
+end
+
+function Game:setKeyPressed(key)
+    self.wasKeyPressed[key] = true
+end
+
+function Game:isDown(key)
+    return self.isKeyDown[key]
+end
+
+function Game:wasPressed(key)
+    return self.wasKeyPressed[key]
+end
+
+function Game:clearKeyPressed()
+    self.wasKeyPressed = {}
+end
+
+function Game:clearKeyDown()
+    self.isKeyDown = {}
+end
+
+function Game:listenToKeyDown()
+    local keys = {
+        ['up'] = 'up',
+        ['w'] = 'up',
+        ['down'] = 'down',
+        ['s'] = 'down',
+        ['left'] = 'left',
+        ['a'] = 'left',
+        ['right'] = 'right',
+        ['d'] = 'right'
+    }
+
+    for key, mappedKey in pairs(keys) do
+        if love.keyboard.isDown(key) then
+            self:setKeyDown(mappedKey)
+        end
+    end
+end
+
+function Game:handleKeyPressed()
+    if self:wasPressed('escape') then
 		love.event.quit()
 	end
 end
 
-return Game
+function Game:clearKeyDownAndPressed()
+    self:clearKeyDown()
+    self:clearKeyPressed()
+end
