@@ -10,5 +10,23 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Install LÖVE, LuaJIT, LuaRocks and Xvfb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y love luajit libluajit-5.1-dev luarocks xvfb
+      - name: Cache Busted (LuaRocks tree)
+        id: luarocks-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.luarocks
+          key: luarocks-busted-${{ runner.os }}-lua5.1-v1
+      - name: Install Busted (Lua 5.1, same runtime as LÖVE)
+        if: steps.luarocks-cache.outputs.cache-hit != 'true'
+        run: luarocks --lua-version 5.1 --local install busted
       - name: Run Busted
-        uses: lunarmodules/busted@v2.3.0
+        env:
+          # Runner has no sound card. LÖVE uses OpenAL directly (not SDL audio),
+          # so select OpenAL's null backend to avoid the ALSA errors.
+          ALSOFT_DRIVERS: "null"
+          SDL_AUDIODRIVER: dummy
+        run: xvfb-run -a ./test.sh src/

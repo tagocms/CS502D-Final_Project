@@ -1,1 +1,1 @@
-Game = require 'src.Game.game'
+require 'src/Game/game'
