@@ -48,13 +48,140 @@ describe('Game class tests', function ()
             game = nil
         end)
 
-        -- Game:update(dt) tests
-        -- camera
-        it('Correctly fixes the camera when going too far to each direction', function ()
-            game:update(0.2)
+        describe('Movement', function ()
+            it('Correctly handles player up movement', function ()
+                game:setKeyDown('up')
+                game:update(0)
+                local xVelocity, yVelocity = game.player.body:getLinearVelocity()
+                assert(xVelocity == 0, 'Player x velocity should be 0.')
+                assert(math.floor(yVelocity) == -game.player.speed, 'Player y velocity is incorrect.')
+            end)
+
+            it('Correctly handles player down movement', function ()
+                game:setKeyDown('down')
+                game:update(0)
+                local xVelocity, yVelocity = game.player.body:getLinearVelocity()
+                assert(xVelocity == 0, 'Player x velocity should be 0.')
+                assert(math.ceil(yVelocity) == game.player.speed, 'Player y velocity is incorrect.')
+            end)
+
+            it('Correctly handles player left movement', function ()
+                game:setKeyDown('left')
+                game:update(0)
+                local xVelocity, yVelocity = game.player.body:getLinearVelocity()
+                assert(math.floor(xVelocity) == -game.player.speed, 'Player x velocity is incorrect.')
+                assert(yVelocity == 0, 'Player y velocity should be 0.')
+            end)
+
+            it('Correctly handles player right movement', function ()
+                game:setKeyDown('right')
+                game:update(0)
+                local xVelocity, yVelocity = game.player.body:getLinearVelocity()
+                assert(math.ceil(xVelocity) == game.player.speed, 'Player x velocity is incorrect.')
+                assert(yVelocity == 0, 'Player y velocity should be 0.')
+            end)
         end)
-        -- physics
-        -- movement
+
+        describe('Camera', function ()
+            local screenSize = {
+                width = 1080,
+                height = 720
+            }
+            local game
+
+            before_each(function ()
+                game = Game()
+                game.getScreenSize = function ()
+                    return screenSize
+                end
+            end)
+
+            after_each(function ()
+                game.getScreenSize = nil
+            end)
+
+            it('Correctly fixes the camera to player position when centered', function ()
+                game.player.body:setX(game.mapSize.width / 2)
+                game.player.body:setY(game.mapSize.height / 2)
+                game:update(0)
+
+                assert.equals(game.player.x, game.camera.x)
+                assert.equals(game.player.y, game.camera.y)
+            end)
+
+            it('Correctly fixes the camera to player position when to the left of the screen', function ()
+                game.player.body:setX(0)
+                game.player.body:setY(game.mapSize.height / 2)
+                game:update(0)
+                
+                assert.equals(screenSize.width / 2, game.camera.x)
+                assert.equals(game.player.y, game.camera.y)
+            end)
+
+            it('Correctly fixes the camera to player position when to the right of the screen', function ()
+                game.player.body:setX(game.mapSize.width)
+                game.player.body:setY(game.mapSize.height / 2)
+                game:update(0)
+                
+                assert.equals((game.mapSize.width - screenSize.width / 2), game.camera.x)
+                assert.equals(game.player.y, game.camera.y)
+            end)
+
+            it('Correctly fixes the camera to player position when to the top of the screen', function ()
+                game.player.body:setX(game.mapSize.width / 2)
+                game.player.body:setY(0)
+                game:update(0)
+                
+                assert.equals(game.player.x, game.camera.x)
+                assert.equals(screenSize.height / 2, game.camera.y)
+            end)
+
+            it('Correctly fixes the camera to player position when to the bottom of the screen', function ()
+                game.player.body:setX(game.mapSize.width / 2)
+                game.player.body:setY(game.mapSize.height)
+                game:update(0)
+                
+                assert.equals(game.player.x, game.camera.x)
+                assert.equals((game.mapSize.height - screenSize.height / 2), game.camera.y)
+            end)
+        end)
+
+        describe('Physics', function ()
+            it('Correctly equals both player position and player body position without movement', function ()
+                assert.equals(game.player.x, game.player.body:getX(), 'Player X out of sync with body.')
+                assert.equals(game.player.y, game.player.body:getY(), 'Player Y out of sync with body.')
+            end)
+
+            it('Correctly equals both player position and player body position with movement', function ()
+                game:setKeyDown('right')
+                game:setKeyDown('up')
+                game:update(0)
+                assert.equals(game.player.x, game.player.body:getX(), 'Player X out of sync with body.')
+                assert.equals(game.player.y, game.player.body:getY(), 'Player Y out of sync with body.')
+
+                game:setKeyDown('down')
+                game:update(0)
+                assert.equals(game.player.x, game.player.body:getX(), 'Player X out of sync with body.')
+                assert.equals(game.player.y, game.player.body:getY(), 'Player Y out of sync with body.')
+
+                game:setKeyDown('left')
+                game:update(0)
+                assert.equals(game.player.x, game.player.body:getX(), 'Player X out of sync with body.')
+                assert.equals(game.player.y, game.player.body:getY(), 'Player Y out of sync with body.')
+
+                game:setKeyDown('up')
+                game:setKeyDown('down')
+                game:update(0)
+                assert.equals(game.player.x, game.player.body:getX(), 'Player X out of sync with body.')
+                assert.equals(game.player.y, game.player.body:getY(), 'Player Y out of sync with body.')
+
+                game:setKeyDown('right')
+                game:setKeyDown('left')
+                game:update(0)
+                assert.equals(game.player.x, game.player.body:getX(), 'Player X out of sync with body.')
+                assert.equals(game.player.y, game.player.body:getY(), 'Player Y out of sync with body.')
+            end)
+        end)
     end)
 
     describe('Game:keypressed(key)', function ()
@@ -68,9 +195,23 @@ describe('Game class tests', function ()
             game = nil
         end)
 
-        it('Quits the application', function ()
+        it('Correctly sets "escape" key in the "wasKeyPressed" table', function ()
+            spy.on(game, 'setKeyPressed')
+            game:clearKeyDownAndPressed()
+            game:keypressed('escape')
+            assert.spy(game.setKeyPressed).was.called()
+            assert.spy(game.setKeyPressed).was.called_with(match.is_ref(game), 'escape')
+
+            assert(game:wasPressed('escape'), '"Escape" was not correctly set.')
+
+            game:clearKeyDownAndPressed()
+            game.setKeyPressed:revert()
+        end)
+
+        it('Correctly quits the application when "escape" is pressed', function ()
             stub(love.event, 'quit')
             game:keypressed('escape')
+            game:handleKeyPressed()
             assert.stub(love.event.quit).was.called()
             love.event.quit:revert()
         end)
