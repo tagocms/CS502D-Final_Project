@@ -69,9 +69,9 @@ function Game:handlePlayerMovement()
     if self:isDown("up") then
         yVelocity = yVelocity -self.player.speed
     end
-     if self:isDown("down") then
+    if self:isDown("down") then
         yVelocity = yVelocity + self.player.speed
-     end
+    end
     if self:isDown("left") then
         xVelocity = xVelocity - self.player.speed
     end
