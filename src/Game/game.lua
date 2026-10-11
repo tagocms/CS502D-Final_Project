@@ -44,7 +44,7 @@ function Game:init()
     end
     
     self.camera = Camera()
-    self.player = {x = windowWidth / 2, y = self.mapSize.height, speed = 500}
+    self.player = {x = self.mapSize.width / 2, y = self.mapSize.height, speed = 500}
     self.player.sprite = love.graphics.newImage('sprites/cursor/mouse_icon1-SwordPointer.png')
     self.player.body = love.physics.newBody(self.world, self.player.x, self.player.y, 'dynamic')
     self.player.body:setFixedRotation(true)
@@ -57,9 +57,8 @@ function Game:update(dt)
     self:handleKeyPressed()
 
     self:handlePlayerMovement()
-    self:handleCameraMovement()
-
     self:updatePhysicsWorldAndPlayerPosition(dt)
+    self:handleCameraMovement()
 
     self:clearKeyDownAndPressed()
 end
@@ -85,10 +84,7 @@ end
 function Game:handleCameraMovement()
     self.camera:lookAt(self.player.x, self.player.y)
 
-    local screenSize = {
-        width = love.graphics.getWidth(),
-        height = love.graphics.getHeight()
-    }
+    local screenSize = self.getScreenSize()
 
     -- Left border
     if self.camera.x < screenSize.width / 2 then
@@ -132,6 +128,12 @@ function Game:draw()
     self.camera:detach()
 end
 
+function Game.getScreenSize()
+    return {
+        width = love.graphics.getWidth(),
+        height = love.graphics.getHeight()
+    }
+end
 
 -- Input handling
 function Game:keypressed(key)
