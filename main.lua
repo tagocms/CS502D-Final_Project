@@ -1,6 +1,8 @@
 local game = nil
 -- Main functions
 function love.load(args)
+    -- Setting default filter for loading spritesheets
+    love.graphics.setDefaultFilter('nearest', 'nearest')
     require 'dependencies'
     
     -- Run the specs inside LÖVE: `love . --test [busted args]`
