@@ -1,7 +1,8 @@
-require 'dependencies'
 local game = nil
 -- Main functions
 function love.load(args)
+    require 'dependencies'
+    
     -- Run the specs inside LÖVE: `love . --test [busted args]`
     if args[1] == '--test' then
         local code = 0
