@@ -141,27 +141,27 @@ function Game:keypressed(key)
 end
 
 function Game:setKeyDown(key)
-    self.isKeyDown[key] = true
+    self.keysDown:setKeyInteracted(key)
 end
 
 function Game:setKeyPressed(key)
-    self.wasKeyPressed[key] = true
+    self.keysPressed:setKeyInteracted(key)
 end
 
 function Game:isDown(key)
-    return self.isKeyDown[key]
+    return self.keysDown:isInteracted(key)
 end
 
 function Game:wasPressed(key)
-    return self.wasKeyPressed[key]
+    return self.keysPressed:isInteracted(key)
 end
 
 function Game:clearKeyPressed()
-    self.wasKeyPressed = {}
+    self.keysPressed = KeysInteracted()
 end
 
 function Game:clearKeyDown()
-    self.isKeyDown = {}
+    self.keysDown = KeysInteracted()
 end
 
 function Game:listenToKeyDown()
