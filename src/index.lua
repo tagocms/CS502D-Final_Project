@@ -1,3 +1,4 @@
 require 'src.Animation.index'
 require 'src.Game.index'
+require 'src.Animatable.index'
 require 'src.utils.index'
