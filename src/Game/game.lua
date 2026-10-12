@@ -44,45 +44,31 @@ function Game:init()
     end
     
     self.camera = Camera()
-    self.player = {x = self.mapSize.width / 2, y = self.mapSize.height, speed = 500}
-    self.player.sprite = love.graphics.newImage('sprites/cursor/mouse_icon1-SwordPointer.png')
-    self.player.body = love.physics.newBody(self.world, self.player.x, self.player.y, 'dynamic')
-    self.player.body:setFixedRotation(true)
-    self.player.shape = love.physics.newRectangleShape(self.player.sprite:getWidth(), self.player.sprite:getHeight())
-    love.physics.newFixture(self.player.body, self.player.shape)
+    self.player = Player {
+        animations = ENTITIES['player'].animations,
+        position = {
+            x = self.mapSize.width / 2,
+            y = self.mapSize.height
+        },
+        size = ENTITIES['player'].size,
+        speed = ENTITIES['player'].speed,
+        world = self.world
+    }
 end
 
 function Game:update(dt)
     self:listenToKeyDown()
     self:handleKeyPressed()
 
-    self:handlePlayerMovement()
+    self.player:update(dt, self.keysDown)
     self:updatePhysicsWorldAndPlayerPosition(dt)
     self:handleCameraMovement()
 
     self:clearKeyDownAndPressed()
 end
 
-function Game:handlePlayerMovement()
-    local xVelocity, yVelocity = 0, 0
-    if self:isDown("up") then
-        yVelocity = yVelocity -self.player.speed
-    end
-    if self:isDown("down") then
-        yVelocity = yVelocity + self.player.speed
-    end
-    if self:isDown("left") then
-        xVelocity = xVelocity - self.player.speed
-    end
-    if self:isDown("right") then
-        xVelocity = xVelocity + self.player.speed
-    end
-
-    self.player.body:setLinearVelocity(xVelocity, yVelocity)
-end
-
 function Game:handleCameraMovement()
-    self.camera:lookAt(self.player.x, self.player.y)
+    self.camera:lookAt(self.player.position.x, self.player.position.y)
 
     local screenSize = self.getScreenSize()
 
@@ -107,14 +93,9 @@ function Game:handleCameraMovement()
     end
 end
 
-function Game:setPlayerPositionToPlayerBodyPosition()
-    self.player.x = self.player.body:getX()
-    self.player.y = self.player.body:getY()
-end
-
 function Game:updatePhysicsWorldAndPlayerPosition(dt)
     self.world:update(dt)
-    self:setPlayerPositionToPlayerBodyPosition()
+    self.player:updatePosition()
 end
 
 function Game:draw()
@@ -122,7 +103,7 @@ function Game:draw()
         self.gameMap:drawLayer(self.gameMap.layers["Background"])
         self.gameMap:drawLayer(self.gameMap.layers["BackMiddleground"])
 
-        love.graphics.draw(self.player.sprite, self.player.x, self.player.y, nil, 1, 1, self.player.sprite:getWidth() / 2, self.player.sprite:getHeight() / 2)
+        self.player:draw()
         self.gameMap:drawLayer(self.gameMap.layers["Middleground"])
         self.gameMap:drawLayer(self.gameMap.layers["Foreground"])
     self.camera:detach()
