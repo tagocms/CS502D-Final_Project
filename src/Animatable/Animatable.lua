@@ -2,19 +2,20 @@ Animatable = Class{}
 
 function Animatable:init(def)
     self.position = {
-        x = def.position.x,
-        y = def.position.y
+        x = def.position.x or 0,
+        y = def.position.y or 0
     }
     self.size = {
-        width = def.size.width,
-        height = def.size.height
+        width = def.size.width or 0,
+        height = def.size.height or 0
     }
 
-    self.defaultAnimation = def.defaultAnimation
-    self:initializeAnimations(def.animations)
+    self:initializeAnimations(def.animations, def.defaultAnimation)
 end
 
-function Animatable:initializeAnimations(animations)
+function Animatable:initializeAnimations(animations, defaultAnimation)
+    local defaultAnimation = defaultAnimation or 'idle'
+
     self.animations = {}
     for key, animation in pairs(animations) do
         local newAnimation = Animation {
@@ -25,15 +26,31 @@ function Animatable:initializeAnimations(animations)
         }  
         self.animations[key] = newAnimation
     end
-    self.currentAnimation = self.animations[self.defaultAnimation]
+
+    local currentAnimation
+    if self.animations[defaultAnimation] then
+        currentAnimation = self.animations[defaultAnimation]
+    end
+    self.currentAnimation = currentAnimation
 end
 
 function Animatable:update(dt)
+    if not self.currentAnimation then return end
     self.currentAnimation:update(dt)
 end
 
+function Animatable:setCurrentAnimation(newAnimation)
+    if self.animations[newAnimation] then
+        self.currentAnimation = self.animations[newAnimation]
+    else
+        self.currentAnimation = nil
+    end
+end
+
 function Animatable:draw(scaleX, scaleY, offsetX, offsetY)
+    if not self.currentAnimation then return end
     local anim = self.currentAnimation
+
     local scaleX = scaleX or 1
     local scaleY = scaleY or 1
     local offsetX = offsetX or nil
@@ -44,7 +61,7 @@ function Animatable:draw(scaleX, scaleY, offsetX, offsetY)
         self.position.x, self.position.y,
         nil,
         scaleX, scaleY,
-        offsetX, offsetY, 
+        offsetX, offsetY,
         nil, nil
     )
 end
