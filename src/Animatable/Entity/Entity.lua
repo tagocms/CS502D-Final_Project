@@ -3,7 +3,8 @@ Entity = Class{__includes = Animatable}
 function Entity:init(def)
     Animatable.init(self, def)
 
-    if def.world then
+    local world = def.world
+    if world and (type(world) == "userdata" and world:typeOf("World")) then
         self:createPhysics(def.world)
     end
 end
@@ -13,6 +14,7 @@ function Entity:update(dt)
 end
 
 function Entity:updatePosition()
+    if not self.physics.body then return end
     self.position.x = self.physics.body:getX()
     self.position.y = self.physics.body:getY()
 end
@@ -22,6 +24,11 @@ function Entity:draw()
 end
 
 function Entity:createPhysics(world)
+    if self.size.width <= 0 or self.size.height <= 0 then return end
+    if self.physics and self.physics.body then
+        self.physics.body:destroy()
+    end
+
     self.physics = {}
     self.physics.body = love.physics.newBody(world, self.position.x, self.position.y, 'dynamic')
     self.physics.body:setFixedRotation(true)
