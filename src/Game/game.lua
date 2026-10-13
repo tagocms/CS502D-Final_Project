@@ -10,7 +10,7 @@ function Game:init()
     })
     love.window.setTitle("Age of Bandits")
     -- TODO: Not the permanent icon
-    love.window.setIcon(love.image.newImageData("sprites/cursor/mouse_icon1-SwordPointer.png"))
+    love.window.setIcon(love.image.newImageData('sprites/cursor/mouse_icon1-SwordPointer.png'))
 
     self:clearKeyDownAndPressed()
 
@@ -22,7 +22,7 @@ function Game:init()
 
     self.world = love.physics.newWorld(0, 0)
     self.collidables = {}
-    for i, object in pairs(self.gameMap.layers["Collidable"].objects) do
+    for i, object in pairs(self.gameMap.layers['Collidable'].objects) do
         local isPolygon = object.shape == 'polygon'
         local bodyX = isPolygon and 0 or object.x + object.width / 2
         local bodyY = isPolygon and 0 or object.y + object.height / 2
@@ -42,10 +42,25 @@ function Game:init()
         love.physics.newFixture(collidableObjectBody, collidableObjectShape)
         self.collidables[collidableObjectBody] = collidableObjectShape
     end
+
+    self.enemies = {}
+    for i, object in pairs(self.gameMap.layers['Enemy'].objects) do
+        self.enemies[#self.enemies+1] = Entity {
+            animations = ENTITIES['enemy'].animations,
+            defaultAnimation = ENTITIES['enemy'].defaultAnimation,
+            position = {
+                x = object.x,
+                y = object.y
+            },
+            size = ENTITIES['enemy'].size,
+            world = self.world
+        }
+    end
     
     self.camera = Camera()
     self.player = Player {
         animations = ENTITIES['player'].animations,
+        defaultAnimation = ENTITIES['player'].defaultAnimation,
         position = {
             x = self.mapSize.width / 2,
             y = self.mapSize.height
@@ -60,8 +75,12 @@ function Game:update(dt)
     self:listenToKeyDown()
     self:handleKeyPressed()
 
+    for i, enemy in pairs(self.enemies) do
+        enemy:update(dt)
+    end
     self.player:update(dt, self.keysDown)
-    self:updatePhysicsWorldAndPlayerPosition(dt)
+
+    self:updatePhysicsWorldAndEntitiesPosition(dt)
     self:handleCameraMovement()
 
     self:clearKeyDownAndPressed()
@@ -93,8 +112,11 @@ function Game:handleCameraMovement()
     end
 end
 
-function Game:updatePhysicsWorldAndPlayerPosition(dt)
+function Game:updatePhysicsWorldAndEntitiesPosition(dt)
     self.world:update(dt)
+    for i, enemy in pairs(self.enemies) do
+        enemy:updatePosition()
+    end
     self.player:updatePosition()
 end
 
@@ -103,7 +125,11 @@ function Game:draw()
         self.gameMap:drawLayer(self.gameMap.layers["Background"])
         self.gameMap:drawLayer(self.gameMap.layers["BackMiddleground"])
 
+        for i, enemy in pairs(self.enemies) do
+            enemy:draw()
+        end
         self.player:draw()
+
         self.gameMap:drawLayer(self.gameMap.layers["Middleground"])
         self.gameMap:drawLayer(self.gameMap.layers["Foreground"])
     self.camera:detach()
