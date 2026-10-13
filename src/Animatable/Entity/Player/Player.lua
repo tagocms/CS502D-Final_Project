@@ -2,7 +2,7 @@ Player = Class{ __includes = Entity }
 
 function Player:init(def)
     Entity.init(self, def)
-    self.speed = def.speed
+    self.speed = def.speed or 0
 end
 
 function Player:update(dt, keysDown)
@@ -34,8 +34,8 @@ function Player:handleMovement(keysDown)
 
     self.physics.body:setLinearVelocity(xVelocity, yVelocity)
     if isMoving then
-        self.currentAnimation = self.animations['walk']
+        self:setCurrentAnimation('walk')
     else
-        self.currentAnimation = self.animations['idle']
+        self:setCurrentAnimation('idle')
     end
 end
