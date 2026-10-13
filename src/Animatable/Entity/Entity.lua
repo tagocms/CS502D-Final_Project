@@ -2,7 +2,6 @@ Entity = Class{__includes = Animatable}
 
 function Entity:init(def)
     Animatable.init(self, def)
-    self.speed = def.speed
 
     if def.world then
         self:createPhysics(def.world)
@@ -19,7 +18,7 @@ function Entity:updatePosition()
 end
 
 function Entity:draw()
-    Animatable.draw(self)
+    Animatable.draw(self, 3, 3, self.size.width / 2, self.size.height / 2)
 end
 
 function Entity:createPhysics(world)

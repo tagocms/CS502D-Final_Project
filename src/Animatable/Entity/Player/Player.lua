@@ -2,6 +2,7 @@ Player = Class{ __includes = Entity }
 
 function Player:init(def)
     Entity.init(self, def)
+    self.speed = def.speed
 end
 
 function Player:update(dt, keysDown)
@@ -37,15 +38,4 @@ function Player:handleMovement(keysDown)
     else
         self.currentAnimation = self.animations['idle']
     end
-end
-
-function Player:draw()
-    local anim = self.currentAnimation
-    love.graphics.draw(
-        TEXTURES[anim.texture], FRAMES[anim.texture][anim:getCurrentFrame()],
-        self.position.x, self.position.y,
-        nil,
-        5, 5,
-        self.size.width / 2, self.size.height / 2
-    )
 end
