@@ -1,0 +1,1 @@
+require 'src/Animatable/Entity/Player/Player'
