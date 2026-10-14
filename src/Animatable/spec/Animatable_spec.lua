@@ -79,13 +79,13 @@ describe('Animatable class tests', function ()
         it('Correctly initializes currentAnimation as nil when not passed a defaultAnimation', function ()
             local animatable = createAnimatable('')
 
-            assert.are.equals(animatable.currentAnimation, nil)
+            assert.are.equals(nil, animatable.currentAnimation)
         end)
 
         it('Correctly initializes currentAnimation as nil when passed a defaultAnimation but no animations', function ()
             local animatable = createAnimatable('idle', nil, nil, {})
 
-            assert.are.equals(animatable.currentAnimation, nil)
+            assert.are.equals(nil, animatable.currentAnimation)
         end)
 
         it('Correctly initializes position as 0,0 when not passed a position', function ()
@@ -101,7 +101,7 @@ describe('Animatable class tests', function ()
         end)
 
         it('Correctly initializes currentAnimation', function ()
-            assert.are.equals(animatable.currentAnimation, animatable.animations['idle'])
+            assert.are.equals(animatable.animations['idle'], animatable.currentAnimation)
         end)
 
         it('Correctly initializes position', function ()
@@ -154,12 +154,12 @@ describe('Animatable class tests', function ()
         
         it('Correctly sets currentAnimation when valid animation is passed', function ()
             animatable:setCurrentAnimation('walk')
-            assert.are.equals(animatable.currentAnimation, animatable.animations['walk'])
+            assert.are.equals(animatable.animations['walk'], animatable.currentAnimation)
         end)
 
         it('Correctly sets currentAnimation to nil when invalid animation passed', function ()
             animatable:setCurrentAnimation('fly')
-            assert.are.equals(animatable.currentAnimation, nil)
+            assert.are.equals(nil, animatable.currentAnimation)
         end)
     end)
 end)
