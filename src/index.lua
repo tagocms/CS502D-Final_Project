@@ -1,5 +1,6 @@
 require 'src.Animation.index'
 require 'src.Game.index'
+require 'src.State.index'
 require 'src.Animatable.index'
 require 'src.utils.index'
 require 'src.constants.index'
