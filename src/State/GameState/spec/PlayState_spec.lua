@@ -2,7 +2,7 @@ require 'dependencies'
 
 describe('PlayState class tests', function ()
     local createPlayState = function ()
-        return PlayState {gameMapPath = 'src/maps/CastleOutside.lua'}
+        return PlayState {gameMapPath = 'src/maps/CastleOutside.lua', callbacks = {}}
     end
 
     local createKeysDown = function (...)

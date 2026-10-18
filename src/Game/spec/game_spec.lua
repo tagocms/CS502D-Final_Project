@@ -35,10 +35,10 @@ describe('Game class tests', function ()
         end)
 
         it('Starts the PlayState with the CastleOutside map', function ()
-            spy.on(PlayState, 'init')
+            spy.on(_G, 'Sti')
             Game()
-            assert.spy(PlayState.init).was.called_with(match._, {gameMapPath = 'src/maps/CastleOutside.lua'})
-            PlayState.init:revert()
+            assert.spy(_G.Sti).was.called_with('src/maps/CastleOutside.lua')
+            _G.Sti:revert()
         end)
     end)
 
@@ -72,10 +72,13 @@ describe('Game class tests', function ()
             assert(yVelocity < 0, 'Player did not move up, keys down were not forwarded.')
         end)
 
-        it('Provides an enterNewState callback that changes the StateMachine state', function ()
+        it('Provides an enterNewState callback on entering new state that changes the StateMachine state', function ()
             local SwitchingState = Class{__includes = BaseState}
+            function SwitchingState:init(def)
+                self.enterNewState = def.callbacks.enterNewState
+            end
             function SwitchingState:update(dt, params)
-                params.enterNewState('PlayState', {gameMapPath = 'src/maps/CastleOutside.lua'})
+                self.enterNewState('PlayState', {gameMapPath = 'src/maps/CastleOutside.lua'})
             end
 
             game.stateMachine._availableStates['SwitchingState'] = SwitchingState

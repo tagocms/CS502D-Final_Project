@@ -22,6 +22,9 @@ describe('StateMachine class tests', function ()
     before_each(function ()
         StateA = createState('StateA')
         StateB = createState('StateB')
+        for i, State in ipairs({StateA, StateB}) do
+            function State:init(def) self.def = def end
+        end
     end)
 
     describe('StateMachine:init(def)', function ()
@@ -31,10 +34,8 @@ describe('StateMachine class tests', function ()
         end)
 
         it('Passes the initial state params to the initial state', function ()
-            local params = {foo = 'bar'}
-            spy.on(StateA, 'init')
-            createStateMachine('StateA', params)
-            assert.spy(StateA.init).was.called_with(match._, params)
+            local stateMachine = createStateMachine('StateA', {foo = 'bar'})
+            assert.are.equals('bar', stateMachine.currentState.def.foo)
         end)
 
         it('Has no current state when the initial state is unavailable', function ()
@@ -56,11 +57,28 @@ describe('StateMachine class tests', function ()
         end)
 
         it('Passes the params to the new state', function ()
+            local stateMachine = createStateMachine('StateA')
+            stateMachine:enterNewState('StateB', {foo = 'bar'})
+            assert.are.equals('bar', stateMachine.currentState.def.foo)
+        end)
+
+        it('Does not modify the params table it receives', function ()
             local params = {foo = 'bar'}
             local stateMachine = createStateMachine('StateA')
-            spy.on(StateB, 'init')
             stateMachine:enterNewState('StateB', params)
-            assert.spy(StateB.init).was.called_with(match._, params)
+            assert.is_nil(params.callbacks)
+        end)
+
+        it('Accepts nil params', function ()
+            local stateMachine = createStateMachine('StateA')
+            assert.has_no.errors(function () stateMachine:enterNewState('StateB') end)
+        end)
+
+        it('Gives the new state an enterNewState callback that changes the state', function ()
+            local stateMachine = createStateMachine('StateA')
+            stateMachine.currentState.def.callbacks.enterNewState('StateB', {foo = 'bar'})
+            assert(getmetatable(stateMachine.currentState) == StateB, 'Current state is not StateB.')
+            assert.are.equals('bar', stateMachine.currentState.def.foo)
         end)
 
         it('Exits the previous state exactly once', function ()
