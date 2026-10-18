@@ -13,3 +13,19 @@ function ipairs_reverse(t)
     end
     return iter, t, #t + 1
 end
+
+function push(T, other)
+    for i, item in ipairs(other) do
+        table.insert(T, item)
+    end
+    
+    return T
+end
+
+function push_with_keyvalue(T, other)
+    for key, value in pairs(other) do
+        T[key] = value
+    end
+
+    return T
+end
