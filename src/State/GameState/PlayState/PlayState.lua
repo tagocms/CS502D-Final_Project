@@ -58,54 +58,42 @@ function PlayState:init(def)
         speed = ENTITIES['player'].speed,
         world = self.world
     }
+
+    local stateMachine = StateMachine {
+        availableStates = {
+            [ExploreState.getName()] = ExploreState,
+            [BattleState.getName()] = BattleState
+        },
+        initialStateName = ExploreState.getName(),
+        initialStateParams = {
+            gameMap = self.gameMap,
+            mapSize = self.mapSize,
+            camera = self.camera,
+            world = self.world,
+            enemies = self.enemies,
+            player = self.player,
+            getScreenSize = PlayState.getScreenSize
+        }
+    }
+    self.stateStack = Stack {
+        newItem = stateMachine
+    }
 end
 
 function PlayState:exit()
-    
+    self.stateStack:exit()
 end
 
 function PlayState:update(dt, params)
-    for i, enemy in pairs(self.enemies) do
-        enemy:update(dt)
-    end
-    self.player:update(dt, params.keysDown)
-
-    self:updatePhysicsWorldAndEntitiesPosition(dt)
-    self:handleCameraMovement()
+    self.stateStack:update(dt, params)
 end
 
-function PlayState:handleCameraMovement()
-    self.camera:lookAt(self.player.position.x, self.player.position.y)
-
-    local screenSize = self.getScreenSize()
-
-    -- Left border
-    if self.camera.x < screenSize.width / 2 then
-        self.camera.x = screenSize.width / 2
-    end
-
-    -- Top border
-    if self.camera.y < screenSize.height / 2 then
-        self.camera.y = screenSize.height / 2
-    end
-
-    -- Right border
-    if self.camera.x > (self.mapSize.width - screenSize.width / 2) then
-        self.camera.x = (self.mapSize.width - screenSize.width / 2)
-    end
-
-    -- Bottom border
-    if self.camera.y > (self.mapSize.height - screenSize.height / 2) then
-        self.camera.y = (self.mapSize.height - screenSize.height / 2)
-    end
+function PlayState:draw()
+    self.stateStack:draw()
 end
 
-function PlayState:updatePhysicsWorldAndEntitiesPosition(dt)
-    self.world:update(dt)
-    for i, enemy in pairs(self.enemies) do
-        enemy:updatePosition()
-    end
-    self.player:updatePosition()
+function PlayState.getName()
+    return 'PlayState'
 end
 
 function PlayState.getScreenSize()
@@ -113,23 +101,4 @@ function PlayState.getScreenSize()
         width = love.graphics.getWidth(),
         height = love.graphics.getHeight()
     }
-end
-
-function PlayState:draw()
-    self.camera:attach()
-        self.gameMap:drawLayer(self.gameMap.layers["Background"])
-        self.gameMap:drawLayer(self.gameMap.layers["BackMiddleground"])
-
-        for i, enemy in pairs(self.enemies) do
-            enemy:draw()
-        end
-        self.player:draw()
-
-        self.gameMap:drawLayer(self.gameMap.layers["Middleground"])
-        self.gameMap:drawLayer(self.gameMap.layers["Foreground"])
-    self.camera:detach()
-end
-
-function PlayState.getName()
-    return 'PlayState'
 end

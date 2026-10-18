@@ -1,1 +1,1 @@
-require 'src/State/GameState/PlayState'
+require 'src.State.GameState.PlayState.index'
