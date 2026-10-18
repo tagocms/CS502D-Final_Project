@@ -1,6 +1,8 @@
 PlayState = Class{__includes = BaseState}
 
 function PlayState:init(def)
+    self.callbacks = def.callbacks
+
     self.gameMap = Sti(def.gameMapPath)
     self.mapSize = {
         width = self.gameMap.width * self.gameMap.tilewidth,

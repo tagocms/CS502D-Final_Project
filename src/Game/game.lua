@@ -30,10 +30,7 @@ function Game:update(dt)
         dt,
         {
             keysDown = self.keysDown,
-            keysPressed = self.keysPressed,
-            enterNewState = function (newStateName, newStateParams)
-                 self.stateMachine:enterNewState(newStateName, newStateParams)
-            end
+            keysPressed = self.keysPressed
         }
     )
     self:clearKeyDownAndPressed()

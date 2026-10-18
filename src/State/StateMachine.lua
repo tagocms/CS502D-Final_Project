@@ -15,7 +15,13 @@ function StateMachine:enterNewState(newStateName, newStateParams)
     if self.currentState then
         self.currentState:exit()
     end
-    self.currentState = self._availableStates[newStateName](newStateParams)
+    local callbacks = {
+        enterNewState = function (newName, newParams)
+            self:enterNewState(newName, newParams)
+        end
+    }
+    local paramsCopy = push_with_keyvalue({}, newStateParams or {})
+    self.currentState = self._availableStates[newStateName](push_with_keyvalue(paramsCopy, {callbacks = callbacks}))
 end
 
 function StateMachine:update(dt, params)
