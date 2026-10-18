@@ -44,7 +44,7 @@ function Stack:clearStack()
 end
 
 function Stack:getCurrentItem()
-    if not #self._activeItems > 0 then return nil end
+    if not (tablelength(self._activeItems) > 0) then return nil end
 
     return self._activeItems[#self._activeItems]
 end
