@@ -18,10 +18,10 @@ function StateMachine:enterNewState(newStateName, newStateParams)
     self.currentState = self._availableStates[newStateName](newStateParams)
 end
 
-function StateMachine:update(dt)
+function StateMachine:update(dt, params)
     if not self.currentState then return end
 
-    self.currentState:update(dt)
+    self.currentState:update(dt, params)
 end
 
 function StateMachine:draw()

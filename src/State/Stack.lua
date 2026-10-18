@@ -63,10 +63,10 @@ function Stack:isItemInActiveItems(currentItemName)
     return false
 end
 
-function Stack:update(dt)
+function Stack:update(dt, params)
     if not self:getCurrentItem() then return end
 
-    self:getCurrentItem():update(dt)
+    self:getCurrentItem():update(dt, params)
 end
 
 function Stack:draw()
