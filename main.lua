@@ -34,3 +34,15 @@ function love.keypressed(key)
         game:keypressed(key) 
     end
 end
+
+function love.mousepressed(x, y, button, istouch, presses)
+    if game then
+        game:mousepressed(x, y, button)
+    end
+end
+
+function love.mousereleased(x, y, button, istouch, presses)
+    if game then
+        game:mousereleased(x, y, button)
+    end
+end
