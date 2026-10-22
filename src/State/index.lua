@@ -4,3 +4,4 @@ require 'src/State/Stack'
 require 'src/State/StateMachine'
 
 require 'src.State.GameState.index'
+require 'src.State.EntityState.index'

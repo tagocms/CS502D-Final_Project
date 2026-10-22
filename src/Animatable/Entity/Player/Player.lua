@@ -3,39 +3,66 @@ Player = Class{ __includes = Entity }
 function Player:init(def)
     Entity.init(self, def)
     self.speed = def.speed or 0
+    self.stateMachine = StateMachine {
+        availableStates = {
+            [PlayerExploreState.getName()] = PlayerExploreState,
+            [PlayerBattleIdleState.getName()] = PlayerBattleIdleState,
+        },
+        initialStateName = PlayerExploreState.getName(),
+        initialStateParams = {
+            playerSpeed = self.speed,
+            setLinearVelocity = function (xVelocity, yVelocity) self:setLinearVelocity(xVelocity, yVelocity) end,
+            setMovementTarget = function (position) self:setMovementTarget(position) end
+        }
+    }
 end
 
-function Player:update(dt, keysDown)
+function Player:update(dt, params, canInput)
     Entity.update(self, dt)
-
-    self:handleMovement(keysDown)
+    if canInput then
+        self.stateMachine:update(dt, params)
+    end
+    self:handleMovement(dt)
 end
 
-function Player:handleMovement(keysDown)
-    local isMoving = false
-    local xVelocity, yVelocity = 0, 0
-
-    if keysDown:isInteracted("up") then
-        yVelocity = yVelocity -self.speed
-        isMoving = true
-    end
-    if keysDown:isInteracted("down") then
-        yVelocity = yVelocity + self.speed
-        isMoving = true
-    end
-    if keysDown:isInteracted("left") then
-        xVelocity = xVelocity - self.speed
-        isMoving = true
-    end
-    if keysDown:isInteracted("right") then
-        xVelocity = xVelocity + self.speed
-        isMoving = true
-    end
-
+function Player:setLinearVelocity(xVelocity, yVelocity)
     self.physics.body:setLinearVelocity(xVelocity, yVelocity)
-    if isMoving then
-        self:setCurrentAnimation('walk')
+end
+
+function Player:setMovementTarget(position)
+    self.movementTarget = position
+end
+
+function Player:handleMovement(dt)
+    if not self.movementTarget then return end
+
+    local position = self:getPosition()
+    local delta = {
+        x = self.movementTarget.x - position.x,
+        y = self.movementTarget.y - position.y
+    }
+    local totalDistance = math.sqrt(delta.x * delta.x + delta.y * delta.y)
+
+    if totalDistance <= self.speed * dt then
+        self:endMovement()
     else
-        self:setCurrentAnimation('idle')
+        self:setLinearVelocity(
+            delta.x / totalDistance * self.speed,
+            delta.y / totalDistance * self.speed
+        )
     end
+end
+
+function Player:endMovement()
+    self:setLinearVelocity(0, 0)
+    self:setMovementTarget(nil)
+end
+
+function Player:getPosition()
+    local x, y = self.physics.body:getPosition()
+    return { x = x, y = y }
+end
+
+function Player:getClassName()
+    return 'Player'
 end
