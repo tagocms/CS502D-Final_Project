@@ -11,6 +11,12 @@ end
 
 function Entity:update(dt)
     Animatable.update(self, dt)
+    local xVelocity, yVelocity = self.physics.body:getLinearVelocity()
+    if xVelocity ~= 0 or yVelocity ~= 0 then
+        self:setCurrentAnimation('walk')
+    else
+        self:setCurrentAnimation('idle')
+    end
 end
 
 function Entity:updatePosition()
@@ -34,4 +40,9 @@ function Entity:createPhysics(world)
     self.physics.body:setFixedRotation(true)
     self.physics.shape = love.physics.newRectangleShape(self.size.width, self.size.height)
     self.physics.fixture = love.physics.newFixture(self.physics.body, self.physics.shape)
+    self.physics.fixture:setUserData(self:getClassName())
+end
+
+function Entity:getClassName()
+    return 'Entity'
 end
