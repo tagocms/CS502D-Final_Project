@@ -28,7 +28,8 @@ function PlayState:init(def)
             collidableObjectShape = love.physics.newRectangleShape(object.width, object.height)
         end
         
-        love.physics.newFixture(collidableObjectBody, collidableObjectShape)
+        local fixture = love.physics.newFixture(collidableObjectBody, collidableObjectShape)
+        fixture:setUserData('Wall')
         self.collidables[collidableObjectBody] = collidableObjectShape
     end
 
@@ -47,6 +48,8 @@ function PlayState:init(def)
     end
     
     self.camera = Camera()
+    self.camera.speed = 10
+
     self.player = Player {
         animations = ENTITIES['player'].animations,
         defaultAnimation = ENTITIES['player'].defaultAnimation,
@@ -58,6 +61,26 @@ function PlayState:init(def)
         speed = ENTITIES['player'].speed,
         world = self.world
     }
+
+    self.collided = {}
+    local function resolveCollision(a, b, coll)
+        local objA = a:getUserData()
+        local objB = b:getUserData()
+
+        if (objA == 'Player' or objB == 'Player') then
+            self:setCollision(self.player)
+        end
+    end
+
+    local function beginContact(a, b, coll)
+        resolveCollision(a, b, coll)
+    end
+
+    local function preSolve(a, b, coll)
+        resolveCollision(a, b, coll)
+    end
+
+    self.world:setCallbacks(beginContact, function () end, preSolve, nil)
 
     local stateMachine = StateMachine {
         availableStates = {
@@ -72,7 +95,8 @@ function PlayState:init(def)
             world = self.world,
             enemies = self.enemies,
             player = self.player,
-            getScreenSize = PlayState.getScreenSize
+            getScreenSize = PlayState.getScreenSize,
+            isCameraLocked = true
         }
     }
     self.stateStack = Stack {
@@ -85,10 +109,44 @@ function PlayState:exit()
 end
 
 function PlayState:update(dt, params)
-    self.stateStack:update(dt, params)
+    local paramsCopy = push_with_keyvalue({}, params)
+    self.stateStack:update(
+        dt,
+        push_with_keyvalue(
+            paramsCopy,
+            {
+                mousePosition = self:convertMousePositionToGame()
+            }
+        )
+    )
+    self:handleCollisions()
+end
+
+function PlayState:setCollision(object)
+    self.collided[object] = true
+end
+
+function PlayState:handleCollisions()
+    if self.collided[self.player] then
+        self.player:endMovement()
+    end
+
+    self.collided = {}
 end
 
 function PlayState:draw()
+    self.camera:attach()
+        self.gameMap:drawLayer(self.gameMap.layers["Background"])
+        self.gameMap:drawLayer(self.gameMap.layers["BackMiddleground"])
+
+        for i, enemy in pairs(self.enemies) do
+            enemy:draw()
+        end
+        self.player:draw()
+
+        self.gameMap:drawLayer(self.gameMap.layers["Middleground"])
+        self.gameMap:drawLayer(self.gameMap.layers["Foreground"])
+    self.camera:detach()
     self.stateStack:draw()
 end
 
@@ -101,4 +159,9 @@ function PlayState.getScreenSize()
         width = love.graphics.getWidth(),
         height = love.graphics.getHeight()
     }
+end
+
+function PlayState:convertMousePositionToGame()
+    local x, y = self.camera:mousePosition()
+    return { x = x, y = y }
 end
