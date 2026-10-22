@@ -5,13 +5,23 @@ function KeysInteracted:init()
 end
 
 function KeysInteracted:clear()
-    self.keysPressed = {}
+    self.keysInteracted = {}
 end
 
 function KeysInteracted:setKeyInteracted(key)
-    self.keysPressed[key] = true
+    self.keysInteracted[key] = true
 end
 
 function KeysInteracted:isInteracted(key)
-    return self.keysPressed[key]
+    return self.keysInteracted[key]
+end
+
+function KeysInteracted:hasAnyInteraction()
+    for k, value in pairs(self.keysInteracted) do
+        if value then
+            return true
+        end
+    end
+
+    return false
 end
