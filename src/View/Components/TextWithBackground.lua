@@ -26,11 +26,31 @@ function TextWithBackground:init(def)
         vertical = def.padding.vertical or 0,
     }
 
-    self.onNoInteractionCallback = def.onNoInteractionCallback or function () end
+    self.isDisabled = def.isDisabled or false
     self.onInteractionCallback = def.onInteractionCallback or function (mouseButtonsPressed) end
+
+    self.defaultTextColor = deepcopy(self.textColor)
+    self.defaultBackgroundColor = deepcopy(self.backgroundColor)
+
+    self.isHoverAllowed = def.isHoverAllowed or false
+    local hoveredColors = self:newColorsForState('hovered')
+    self.hoveredTextColor = hoveredColors.newTextColor
+    self.hoveredBackgroundColor = hoveredColors.newBackgroundColor
+
+    self.isInteracting = false
+    local interactedColors = self:newColorsForState('interacted')
+    self.interactedTextColor = interactedColors.newTextColor
+    self.interactedBackgroundColor = interactedColors.newBackgroundColor
+
+    if self.isDisabled then
+        local disabledColors = self:newColorsForState('disabled')
+        self.textColor = disabledColors.newTextColor
+        self.backgroundColor = disabledColors.newBackgroundColor
+    end
 end
 
 function TextWithBackground:update(dt, params)
+    if self.isDisabled then return end
     if View.isIntersecting(
         {
             size = {width = 1, height = 1},
@@ -38,10 +58,76 @@ function TextWithBackground:update(dt, params)
         },
         self:getBbox()
     ) then
-        self.onInteractionCallback(params.mouseButtonsPressed)
+        if self:isColorDifferentFrom('hovered') and not self.isInteracting then
+            self.textColor = self.hoveredTextColor
+            self.backgroundColor = self.hoveredBackgroundColor
+        end
+        local wasInteracted = self.onInteractionCallback(params.mouseButtonsPressed)
+        if wasInteracted then
+            self:fireInteractionAnimation()
+        end
     else
-        self.onNoInteractionCallback()
+        if self:isColorDifferentFrom('default') and not self.isInteracting then
+            self.textColor = self.defaultTextColor
+            self.backgroundColor = self.defaultBackgroundColor
+        end
     end
+end
+
+function TextWithBackground:fireInteractionAnimation()
+    self.isInteracting = true
+    self.backgroundColor = self.interactedBackgroundColor
+    self.textColor = self.interactedTextColor
+    Timer.after(0.1, function ()
+        self.isInteracting = false
+    end)
+end
+
+function TextWithBackground:isColorDifferentFrom(state)
+    if state == 'hovered' then
+        return (
+            self.backgroundColor ~= self.hoveredBackgroundColor
+            or self.textColor ~= self.hoveredTextColor
+        )
+    elseif state == 'default' then
+        return (
+            self.backgroundColor ~= self.defaultBackgroundColor
+            or self.textColor ~= self.defaultTextColor
+        )
+    end
+
+    return false
+end
+
+function TextWithBackground:newColorsForState(state)
+    local newTextColor = deepcopy(self.defaultTextColor)
+    local newBackgroundColor = deepcopy(self.defaultBackgroundColor)
+
+    if state == 'hovered' then
+        newTextColor.alpha = newTextColor.alpha * 0.8
+        newBackgroundColor.alpha = newBackgroundColor.alpha * 0.6
+    elseif state == 'interacted' then
+        newTextColor.alpha = newTextColor.alpha * 0.6
+        newBackgroundColor.alpha = newBackgroundColor.alpha * 0.4
+    elseif state == 'disabled' then
+        newTextColor = {
+            red = 0.6,
+            green = 0.6,
+            blue = 0.6,
+            alpha = 1
+        }
+        newBackgroundColor = {
+            red = 0.4,
+            green = 0.4,
+            blue = 0.4,
+            alpha = 1
+        }
+    end
+
+    return {
+        newTextColor = newTextColor,
+        newBackgroundColor = newBackgroundColor
+    }
 end
 
 function TextWithBackground:draw()

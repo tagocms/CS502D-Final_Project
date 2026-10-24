@@ -31,8 +31,8 @@ function ExploreState:handleInput(dt, params)
 
     self:handleCameraMovement(params.keysDown)
     if params.keysPressed:isInteracted('k') then
-        self.isCameraLocked = not self.isCameraLocked
-        self.views.lockCameraToggleButton.text = self:getLockCameraToggleButtonText()
+        self:toggleCameraLock()
+        self.views.lockCameraToggleButton:fireInteractionAnimation()
     end
 
     if self:mouseIntersectsAnyView(params.realMousePosition) then
@@ -121,23 +121,27 @@ function ExploreState:initializeViews()
         padding = {horizontal = 16, vertical = 8},
         textAlign = 'center',
         cornerRadius = 8,
+        isHoverAllowed = true
     }
-    lockCameraToggleButton.onNoInteractionCallback = function ()
-        lockCameraToggleButton.backgroundColor = {red = 0, green = 0, blue = 0, alpha = 1}
-    end
     lockCameraToggleButton.onInteractionCallback = function (mouseButtonsPressed)
         if mouseButtonsPressed:isInteracted(1) then
-            self.isCameraLocked = not self.isCameraLocked
-            lockCameraToggleButton.text = self:getLockCameraToggleButtonText()
-        else
-            lockCameraToggleButton.backgroundColor = {red = 0.5, green = 0.5, blue = 0.5, alpha = 1}
+            self:toggleCameraLock()
+            return true
         end
-    end
 
+        return false
+    end
         
     self.views = {
         lockCameraToggleButton = lockCameraToggleButton
     }
+end
+
+function ExploreState:toggleCameraLock()
+    if not self.views.lockCameraToggleButton.isDisabled then
+        self.isCameraLocked = not self.isCameraLocked
+        self.views.lockCameraToggleButton.text = self:getLockCameraToggleButtonText()
+    end
 end
 
 function ExploreState:draw()

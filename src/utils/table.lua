@@ -4,6 +4,19 @@ function tablelength(T)
   return count
 end
 
+function deepcopy(table)
+    local copy = {}
+    for k, value in pairs(table) do
+        if type(value) == "table" then
+            copy[k] = deepcopy(value)
+        else
+            copy[k] = value
+        end
+    end
+
+    return copy
+end
+
 function ipairs_reverse(t)
     local function iter(t, i)
         i = i - 1
