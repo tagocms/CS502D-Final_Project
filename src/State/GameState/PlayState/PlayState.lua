@@ -19,12 +19,12 @@ function PlayState:init(def)
         local collidableObjectShape = {}
         if object.shape == 'polygon' then
             local vertices = {}
-            for i, vertex in ipairs(object.polygon) do 
+            for i, vertex in ipairs(object.polygon) do
                 vertices[#vertices+1] = vertex.x
                 vertices[#vertices+1] = vertex.y
             end
             collidableObjectShape = love.physics.newPolygonShape(vertices)
-        else 
+        else
             collidableObjectShape = love.physics.newRectangleShape(object.width, object.height)
         end
         
@@ -46,6 +46,8 @@ function PlayState:init(def)
             world = self.world
         }
     end
+
+    self:calculateCollidableGrid()
     
     self.camera = Camera()
     self.camera.speed = 10
@@ -120,6 +122,7 @@ function PlayState:update(dt, params)
         )
     )
     self:handleCollisions()
+    self:calculateCollidableGrid()
 end
 
 function PlayState:setCollision(object)
@@ -134,6 +137,118 @@ function PlayState:handleCollisions()
     self.collided = {}
 end
 
+function PlayState:calculateCollidableGrid()
+    local grid = {}
+    for i = 1, self.gameMap.width do
+        local line = {}
+        for j = 1, self.gameMap.height do
+            table.insert(line, j, 0)
+        end
+        table.insert(grid, i, line)
+    end
+
+    -- Recalculate grid to be 0 in walkable tiles, 1 with collidable objects and 2 with enemies
+    for body, shape in pairs(self.collidables) do
+        local vertices = {shape:getPoints()}
+        local verticesConverted = {}
+        for i = 1, #vertices, 2 do
+            verticesConverted[#verticesConverted+1] = {
+                x = vertices[i],
+                y = vertices[i + 1]
+            }
+        end
+        local minX = verticesConverted[1].x
+        local maxX = verticesConverted[1].x
+        local minY = verticesConverted[1].y
+        local maxY = verticesConverted[1].y
+
+        for i = 2, #verticesConverted do
+            local p = verticesConverted[i]
+            if p.x < minX then minX = p.x end
+            if p.x > maxX then maxX = p.x end
+            if p.y < minY then minY = p.y end
+            if p.y > maxY then maxY = p.y end
+        end
+
+        local objectPosition = {
+            x = body:getX() + minX,
+            y = body:getY() + minY
+        }
+        local objectSize = {
+            width = maxX - minX,
+            height = maxY - minY
+        }
+        local tilePositions = self:convertPositionAndSizeFromPixelsToGrid(objectPosition, objectSize)
+        for i, position in ipairs(tilePositions) do
+            grid[position.x][position.y] = 1
+        end
+    end
+
+    for i, enemy in ipairs(self.enemies) do
+        if not enemy:isDestroyed() then
+            local enemyPosition = enemy:getPosition()
+            enemyPosition = {
+                x = enemyPosition.x - enemy.size.width / 2,
+                y = enemyPosition.y - enemy.size.height / 2
+            }
+            local tilePositions = self:convertPositionAndSizeFromPixelsToGrid(enemyPosition, enemy.size)
+            for i, position in ipairs(tilePositions) do
+               grid[position.x][position.y] = 2
+            end
+        end
+    end
+
+    self.grid = grid
+end
+
+function PlayState:convertPositionFromPixelsToGrid(pixelPosition)
+    local tileWidth, tileHeight = self.gameMap.tilewidth, self.gameMap.tileheight
+
+    local x 
+    local y
+    if pixelPosition.x >= 0 and pixelPosition.x < tileWidth then
+        x = 1
+    else 
+        x = math.ceil(pixelPosition.x / tileWidth)
+    end
+    if pixelPosition.y >= 0 and pixelPosition.y < tileHeight then
+        y = 1
+    else
+        y = math.ceil(pixelPosition.y / tileHeight)
+    end
+    local tilePosition = {
+        x = x,
+        y = y
+    }
+
+    return tilePosition
+end
+
+function PlayState:convertPositionAndSizeFromPixelsToGrid(pixelPosition, objectSize)
+    local tileWidth, tileHeight = self.gameMap.tilewidth, self.gameMap.tileheight
+    local objectGridSize = {
+        width = math.ceil(objectSize.width / tileWidth),
+        height = math.ceil(objectSize.height / tileHeight)
+    }
+    local objectGridPosition = self:convertPositionFromPixelsToGrid(pixelPosition)
+    local minX, maxX = 1, tileWidth
+    local minY, maxY = 1, tileHeight
+
+    local positionsOccupied = {}
+    for i = 1, objectGridSize.width do
+        for j = 1, objectGridSize.height do
+            local x = i + objectGridPosition.x - 1
+            local y = j + objectGridPosition.y - 1
+            -- If object part is inside grid
+            if x >= minX and x <= maxX and y >= minY and y <= maxY then
+                positionsOccupied[#positionsOccupied+1] = {x = x, y = y}
+            end
+        end
+    end
+
+    return positionsOccupied
+end
+
 function PlayState:draw()
     self.camera:attach()
         self.gameMap:drawLayer(self.gameMap.layers["Background"])
@@ -146,6 +261,12 @@ function PlayState:draw()
 
         self.gameMap:drawLayer(self.gameMap.layers["Middleground"])
         self.gameMap:drawLayer(self.gameMap.layers["Foreground"])
+        for i, line in ipairs(self.grid) do
+            for j, cell in ipairs(line) do
+                love.graphics.printf(cell, (i - 1) * 32, (j - 1) * 32, 32, 'center', nil, nil, nil, nil, -8)
+                love.graphics.rectangle('line', (i - 1) * 32, (j - 1) * 32, 32, 32)
+            end
+        end
     self.camera:detach()
     self.stateStack:draw()
 end
