@@ -47,7 +47,7 @@ function PlayState:init(def)
         }
     end
 
-    self:calculateCollidableGrid()
+    self:calculateGrid()
     
     self.camera = Camera()
     self.camera.speed = 10
@@ -104,6 +104,8 @@ function PlayState:init(def)
     self.stateStack = Stack {
         newItem = stateMachine
     }
+
+    self.showDebug = false
 end
 
 function PlayState:exit()
@@ -122,7 +124,10 @@ function PlayState:update(dt, params)
         )
     )
     self:handleCollisions()
-    self:calculateCollidableGrid()
+    if params.keysPressed:isInteracted('d') then
+        self.showDebug = not self.showDebug
+    end
+    self:calculateGrid()
 end
 
 function PlayState:setCollision(object)
@@ -137,7 +142,7 @@ function PlayState:handleCollisions()
     self.collided = {}
 end
 
-function PlayState:calculateCollidableGrid()
+function PlayState:calculateGrid()
     local grid = {}
     for i = 1, self.gameMap.width do
         local line = {}
@@ -204,18 +209,8 @@ end
 function PlayState:convertPositionFromPixelsToGrid(pixelPosition)
     local tileWidth, tileHeight = self.gameMap.tilewidth, self.gameMap.tileheight
 
-    local x 
-    local y
-    if pixelPosition.x >= 0 and pixelPosition.x < tileWidth then
-        x = 1
-    else 
-        x = math.ceil(pixelPosition.x / tileWidth)
-    end
-    if pixelPosition.y >= 0 and pixelPosition.y < tileHeight then
-        y = 1
-    else
-        y = math.ceil(pixelPosition.y / tileHeight)
-    end
+    local x = math.floor(pixelPosition.x / tileWidth) + 1
+    local y = math.floor(pixelPosition.y / tileHeight) + 1
     local tilePosition = {
         x = x,
         y = y
@@ -226,23 +221,15 @@ end
 
 function PlayState:convertPositionAndSizeFromPixelsToGrid(pixelPosition, objectSize)
     local tileWidth, tileHeight = self.gameMap.tilewidth, self.gameMap.tileheight
-    local objectGridSize = {
-        width = math.ceil(objectSize.width / tileWidth),
-        height = math.ceil(objectSize.height / tileHeight)
-    }
-    local objectGridPosition = self:convertPositionFromPixelsToGrid(pixelPosition)
-    local minX, maxX = 1, tileWidth
-    local minY, maxY = 1, tileHeight
+
+    local first = self:convertPositionFromPixelsToGrid(pixelPosition)
+    local lastX = math.ceil((pixelPosition.x + objectSize.width) / tileWidth)
+    local lastY = math.ceil((pixelPosition.y + objectSize.height) / tileHeight)
 
     local positionsOccupied = {}
-    for i = 1, objectGridSize.width do
-        for j = 1, objectGridSize.height do
-            local x = i + objectGridPosition.x - 1
-            local y = j + objectGridPosition.y - 1
-            -- If object part is inside grid
-            if x >= minX and x <= maxX and y >= minY and y <= maxY then
-                positionsOccupied[#positionsOccupied+1] = {x = x, y = y}
-            end
+    for x = math.max(1, first.x), math.min(self.gameMap.width, lastX) do
+        for y = math.max(1, first.y), math.min(self.gameMap.height, lastY) do
+            positionsOccupied[#positionsOccupied+1] = {x = x, y = y}
         end
     end
 
@@ -261,10 +248,13 @@ function PlayState:draw()
 
         self.gameMap:drawLayer(self.gameMap.layers["Middleground"])
         self.gameMap:drawLayer(self.gameMap.layers["Foreground"])
-        for i, line in ipairs(self.grid) do
-            for j, cell in ipairs(line) do
-                love.graphics.printf(cell, (i - 1) * 32, (j - 1) * 32, 32, 'center', nil, nil, nil, nil, -8)
-                love.graphics.rectangle('line', (i - 1) * 32, (j - 1) * 32, 32, 32)
+        
+        if self.showDebug then
+            for i, line in ipairs(self.grid) do
+                for j, cell in ipairs(line) do
+                    love.graphics.printf(cell, (i - 1) * 32, (j - 1) * 32, 32, 'center', nil, nil, nil, nil, -8)
+                    love.graphics.rectangle('line', (i - 1) * 32, (j - 1) * 32, 32, 32)
+                end
             end
         end
     self.camera:detach()
