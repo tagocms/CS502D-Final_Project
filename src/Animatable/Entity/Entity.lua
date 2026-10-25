@@ -46,3 +46,12 @@ end
 function Entity:getClassName()
     return 'Entity'
 end
+
+function Entity:getPosition()
+    local x, y = self.physics.body:getPosition()
+    return { x = x, y = y }
+end
+
+function Entity:isDestroyed()
+    return self.physics.body:isDestroyed()
+end

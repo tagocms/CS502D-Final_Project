@@ -58,11 +58,6 @@ function Player:endMovement()
     self:setMovementTarget(nil)
 end
 
-function Player:getPosition()
-    local x, y = self.physics.body:getPosition()
-    return { x = x, y = y }
-end
-
 function Player:getClassName()
     return 'Player'
 end
