@@ -15,6 +15,10 @@ function love.load(args)
         return
     end
 
+    if arg[2] == "debug" then
+        require("lldebugger").start()
+    end
+
     game = Game()
 end
 function love.update(dt) 
