@@ -22,9 +22,9 @@ end
 function LevelGrid:initializeGrid()
     self._grid = {}
 
-    for i = 1, self._gridSize.width do
+    for i = 1, self._gridSize.height do
         local line = {}
-        for j = 1, self._gridSize.height do
+        for j = 1, self._gridSize.width do
             table.insert(line, j, self._freeTileValue)
         end
         table.insert(self._grid, i, line)
@@ -36,6 +36,7 @@ end
 
 function LevelGrid:initializeGridObjects(objects)
     self._gridObjects = {}
+    if not objects then return end
 
     for k, object in pairs(objects) do
         self:addGridObject(k, object)
@@ -43,7 +44,7 @@ function LevelGrid:initializeGridObjects(objects)
 end
 
 function LevelGrid:initializePathfinder()
-    self.pathfinder = Pathfinder(Grid:new(self._grid), 'JPS', 0)
+    self.pathfinder = Pathfinder(Grid:new(self._grid), 'JPS', self._freeTileValue)
     self.pathfinder:setMode('ORTHOGONAL')
 end
 
@@ -72,6 +73,10 @@ function LevelGrid:addGridObject(key, object)
 end
 
 function LevelGrid:deleteGridObject(key)
+    if not self._gridObjects[key] then return end
+    for key, item in pairs(self._gridObjects[key].items) do
+        self:updateItemTilePositions(item, self._freeTileValue)
+    end
     self._gridObjects[key] = nil
 end
 
@@ -88,12 +93,12 @@ end
 
 function LevelGrid:updateItemTilePositions(item, numberOnGrid)
     for i, position in ipairs(item.lastTilePositions) do
-        self._grid[position.y][position.x] = self._freeTileValue
+        self:setTile(position, self._freeTileValue)
     end
 
     local newTilePositions = self:convertPositionAndSizeFromPixelsToGrid(item:getPosition(), item:getSize())
     for i, position in ipairs(newTilePositions) do
-        self._grid[position.y][position.x] = numberOnGrid
+        self:setTile(position, numberOnGrid)
     end
 
     item.lastTilePositions = newTilePositions
@@ -168,11 +173,21 @@ function LevelGrid:isInside(tilePosition, pixelPosition, objectSizeInPixels)
 end
 
 function LevelGrid:isWalkable(tilePosition)
-    return self._grid[tilePosition.y][tilePosition.x] == self._freeTileValue
+    return self:getTile(tilePosition) == self._freeTileValue
 end
 
 function LevelGrid:getTile(tilePosition)
+    if tilePosition.x > self._gridSize.width or tilePosition.x < 1 
+    or tilePosition.y > self._gridSize.height or tilePosition.y < 1 then
+        return nil
+    end
     return self._grid[tilePosition.y][tilePosition.x]
+end
+
+function LevelGrid:setTile(tilePosition, newValue)
+    if self:getTile(tilePosition) then
+        self._grid[tilePosition.y][tilePosition.x] = newValue
+    end
 end
 
 function LevelGrid:isAreaFree(tilePosition, sizeInTiles, entitiesToIgnore)
@@ -181,10 +196,11 @@ function LevelGrid:isAreaFree(tilePosition, sizeInTiles, entitiesToIgnore)
     local sizeInTiles = sizeInTiles or {width = 1, height = 1}
     local entitiesToIgnore = entitiesToIgnore or {}
 
-    for y = 1, sizeInTiles.height do
-        for x = 1, sizeInTiles.width do
-            if not self:isWalkable({x = x, y = y})
-                and not table.contains(entitiesToIgnore, self._grid[y][x]) then
+    for y = tilePosition.y, tilePosition.y + sizeInTiles.height - 1 do
+        for x = tilePosition.x, tilePosition.x + sizeInTiles.width - 1 do
+            local position = {x = x, y = y}
+            if not self:isWalkable(position)
+                and not table.contains(entitiesToIgnore, self:getTile(position)) then
                 return false
             end
         end
