@@ -42,3 +42,13 @@ function push_with_keyvalue(T, other)
 
     return T
 end
+
+function table.contains(T, item)
+    for i, value in ipairs(T) do
+        if value == item then
+            return true
+        end
+    end
+
+    return false
+end
