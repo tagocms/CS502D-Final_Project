@@ -43,7 +43,7 @@ function LevelGrid:initializeGridObjects(objects)
 end
 
 function LevelGrid:initializePathfinder()
-    self.pathfinder = Pathfinder(Grid(self._grid), 'JPS', 0)
+    self.pathfinder = Pathfinder(Grid:new(self._grid), 'JPS', 0)
     self.pathfinder:setMode('ORTHOGONAL')
 end
 
