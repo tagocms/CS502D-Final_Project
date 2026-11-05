@@ -29,7 +29,7 @@ end
 
 function ExploreState:handleInput(dt, params)
 
-    self:handleCameraMovement(params.keysDown)
+    self:handleCameraMovement(dt, params.keysDown)
     if params.keysPressed:isInteracted('k') then
         self:toggleCameraLock()
         self.views.lockCameraToggleButton:fireInteractionAnimation()
@@ -55,21 +55,21 @@ function ExploreState:mouseIntersectsAnyView(realMousePosition)
     return false
 end
 
-function ExploreState:handleCameraMovement(keysDown)
+function ExploreState:handleCameraMovement(dt, keysDown)
     if self.isCameraLocked then
         self.camera:lookAt(self.player.position.x, self.player.position.y)
     else
         if keysDown:isInteracted('up') then
-            self.camera.y = self.camera.y - self.camera.speed
+            self.camera.y = self.camera.y - (self.camera.speed * dt)
         end
         if keysDown:isInteracted('down') then
-            self.camera.y = self.camera.y + self.camera.speed
+            self.camera.y = self.camera.y + (self.camera.speed * dt)
         end
         if keysDown:isInteracted('left') then
-            self.camera.x = self.camera.x - self.camera.speed
+            self.camera.x = self.camera.x - (self.camera.speed * dt)
         end
         if keysDown:isInteracted('right') then
-            self.camera.x = self.camera.x + self.camera.speed
+            self.camera.x = self.camera.x + (self.camera.speed * dt)
         end
     end 
 

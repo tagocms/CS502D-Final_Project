@@ -9,11 +9,11 @@ function PlayerExploreState:exit()
 end
 
 function PlayerExploreState:update(dt, params)
-    self:handleMouseInput(dt, params.mouseButtonsDown, params.mousePosition)
+    self:handleMouseInput(dt, params.mouseButtonsPressed, params.mousePosition)
 end
 
-function PlayerExploreState:handleMouseInput(dt, mouseButtonsDown, mousePosition)
-    if mouseButtonsDown:isInteracted(1) then
+function PlayerExploreState:handleMouseInput(dt, mouseButtonsPressed, mousePosition)
+    if mouseButtonsPressed:isInteracted(1) then
         self.setMovementTarget(mousePosition)
     end
 end

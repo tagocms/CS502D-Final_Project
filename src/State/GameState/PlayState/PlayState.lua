@@ -39,8 +39,8 @@ function PlayState:init(def)
             animations = ENTITIES['enemy'].animations,
             defaultAnimation = ENTITIES['enemy'].defaultAnimation,
             position = {
-                x = object.x,
-                y = object.y
+                x = object.x + self.gameMap.tilewidth / 2,
+                y = object.y + self.gameMap.tileheight / 2
             },
             size = ENTITIES['enemy'].size,
             world = self.world
@@ -50,14 +50,14 @@ function PlayState:init(def)
     self:calculateGrid()
     
     self.camera = Camera()
-    self.camera.speed = 10
+    self.camera.speed = 1000
 
     self.player = Player {
         animations = ENTITIES['player'].animations,
         defaultAnimation = ENTITIES['player'].defaultAnimation,
         position = {
             x = self.mapSize.width / 2,
-            y = self.mapSize.height
+            y = self.mapSize.height - self.gameMap.tileheight / 2
         },
         size = ENTITIES['player'].size,
         speed = ENTITIES['player'].speed,
@@ -70,7 +70,7 @@ function PlayState:init(def)
         local objB = b:getUserData()
 
         if (objA == 'Player' or objB == 'Player') then
-            self:setCollision(self.player)
+            -- self:setCollision(self.player)
         end
     end
 
@@ -114,17 +114,20 @@ end
 
 function PlayState:update(dt, params)
     local paramsCopy = push_with_keyvalue({}, params)
+    local newFinder = Pathfinder(Grid(self.grid), 'JPS', 0)
+    newFinder:setMode('ORTHOGONAL')
     self.stateStack:update(
         dt,
         push_with_keyvalue(
             paramsCopy,
             {
-                mousePosition = self:convertMousePositionToGame()
+                mousePosition = self:convertMousePositionToGame(),
+                finder = newFinder
             }
         )
     )
     self:handleCollisions()
-    if params.keysPressed:isInteracted('d') then
+    if params.keysPressed:isInteracted('g') then
         self.showDebug = not self.showDebug
     end
     self:calculateGrid()
@@ -142,6 +145,9 @@ function PlayState:handleCollisions()
     self.collided = {}
 end
 
+-- Grid 1-based
+-- Grid indexed as `grid[y][x]`
+-- Entity position should be centered in the grid
 function PlayState:calculateGrid()
     local grid = {}
     for i = 1, self.gameMap.width do
@@ -185,7 +191,7 @@ function PlayState:calculateGrid()
         }
         local tilePositions = self:convertPositionAndSizeFromPixelsToGrid(objectPosition, objectSize)
         for i, position in ipairs(tilePositions) do
-            grid[position.x][position.y] = 1
+            grid[position.y][position.x] = 1
         end
     end
 
@@ -198,7 +204,7 @@ function PlayState:calculateGrid()
             }
             local tilePositions = self:convertPositionAndSizeFromPixelsToGrid(enemyPosition, enemy.size)
             for i, position in ipairs(tilePositions) do
-               grid[position.x][position.y] = 2
+               grid[position.y][position.x] = 2
             end
         end
     end
@@ -206,8 +212,8 @@ function PlayState:calculateGrid()
     self.grid = grid
 end
 
-function PlayState:convertPositionFromPixelsToGrid(pixelPosition)
-    local tileWidth, tileHeight = self.gameMap.tilewidth, self.gameMap.tileheight
+function PlayState.convertPositionFromPixelsToGrid(pixelPosition, tileSize)
+    local tileWidth, tileHeight = tileSize.width, tileSize.height
 
     local x = math.floor(pixelPosition.x / tileWidth) + 1
     local y = math.floor(pixelPosition.y / tileHeight) + 1
@@ -222,7 +228,7 @@ end
 function PlayState:convertPositionAndSizeFromPixelsToGrid(pixelPosition, objectSize)
     local tileWidth, tileHeight = self.gameMap.tilewidth, self.gameMap.tileheight
 
-    local first = self:convertPositionFromPixelsToGrid(pixelPosition)
+    local first = PlayState.convertPositionFromPixelsToGrid(pixelPosition, {width = tileWidth, height = tileHeight})
     local lastX = math.ceil((pixelPosition.x + objectSize.width) / tileWidth)
     local lastY = math.ceil((pixelPosition.y + objectSize.height) / tileHeight)
 
@@ -252,11 +258,14 @@ function PlayState:draw()
         if self.showDebug then
             for i, line in ipairs(self.grid) do
                 for j, cell in ipairs(line) do
-                    love.graphics.printf(cell, (i - 1) * 32, (j - 1) * 32, 32, 'center', nil, nil, nil, nil, -8)
-                    love.graphics.rectangle('line', (i - 1) * 32, (j - 1) * 32, 32, 32)
+                    love.graphics.printf(cell, (j - 1) * TILE_SIZE, (i - 1) * TILE_SIZE, TILE_SIZE, 'center', nil, nil, nil, nil, -8)
+                    love.graphics.rectangle('line', (j - 1) * TILE_SIZE, (i - 1) * TILE_SIZE, TILE_SIZE, TILE_SIZE)
                 end
             end
         end
+
+        local mous = self:convertMousePositionToGame()
+        love.graphics.rectangle('line', mous.x - 16, mous.y - 16, TILE_SIZE, TILE_SIZE)
     self.camera:detach()
     self.stateStack:draw()
 end

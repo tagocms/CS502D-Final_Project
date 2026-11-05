@@ -26,7 +26,8 @@ function Entity:updatePosition()
 end
 
 function Entity:draw()
-    Animatable.draw(self, 3, 3, self.size.width / 2, self.size.height / 2)
+    Animatable.draw(self, 1, 1, self.size.width / 2, self.size.height / 2)
+    love.graphics.polygon('line', self.physics.body:getWorldPoints(self.physics.shape:getPoints()))
 end
 
 function Entity:createPhysics(world)
