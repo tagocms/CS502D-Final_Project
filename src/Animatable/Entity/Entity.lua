@@ -53,6 +53,10 @@ function Entity:getPosition()
     return { x = x, y = y }
 end
 
+function Entity:getSize()
+    return self.size
+end
+
 function Entity:isDestroyed()
     return self.physics.body:isDestroyed()
 end
