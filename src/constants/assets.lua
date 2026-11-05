@@ -4,8 +4,8 @@ TEXTURES = {
 }
 
 FRAMES = {
-    ['player-soldier'] = GenerateQuads(TEXTURES['player-soldier'], ENTITIES['player'].size.width, ENTITIES['player'].size.height),
-    ['enemy-fist'] = GenerateQuads(TEXTURES['enemy-fist'], ENTITIES['enemy'].size.width, ENTITIES['enemy'].size.height)
+    ['player-soldier'] = GenerateQuads(TEXTURES['player-soldier'], ENTITIES['player'].spriteSize.width, ENTITIES['player'].spriteSize.height),
+    ['enemy-fist'] = GenerateQuads(TEXTURES['enemy-fist'], ENTITIES['enemy'].spriteSize.width, ENTITIES['enemy'].spriteSize.height)
 }
 
 CURSOR_IMAGE_DATA = {
@@ -16,3 +16,5 @@ CURSOR_IMAGE_DATA = {
     ['action-blocked'] = love.image.newImageData('sprites/cursor/mouse_icon5-Blocked.png'),
     ['grab'] = love.image.newImageData('sprites/cursor/mouse_icon3-Hand.png'),
 }
+
+TILE_SIZE = 32

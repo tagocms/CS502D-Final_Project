@@ -43,9 +43,13 @@ ENTITIES = {
             },
         },
         defaultAnimation = 'idle',
-        size = {
+        spriteSize = {
             width = 96,
             height = 96
+        },
+        size = {
+            width = 28,
+            height = 28
         },
         speed = 500
     },
@@ -93,9 +97,13 @@ ENTITIES = {
             },
         },
         defaultAnimation = 'idle',
-        size = {
+        spriteSize = {
             width = 96,
             height = 96
+        },
+        size = {
+            width = 28,
+            height = 28
         }
     }
 }
