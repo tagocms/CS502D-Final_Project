@@ -98,13 +98,13 @@ end
 function LevelGrid:updateItemTilePositions(item, numberOnGrid)
     for i, position in ipairs(item.lastTilePositions) do
         self:setTile(position, self._freeTileValue)
-        self:setOccupantTile(position, nil)
+        self:setOccupantInTile(position, nil)
     end
 
     local newTilePositions = self:convertPositionAndSizeFromPixelsToGrid(item:getPosition(), item:getSize())
     for i, position in ipairs(newTilePositions) do
         self:setTile(position, numberOnGrid)
-        self:setOccupantTile(position, item.ref)
+        self:setOccupantInTile(position, item.ref)
     end
 
     item.lastTilePositions = newTilePositions
