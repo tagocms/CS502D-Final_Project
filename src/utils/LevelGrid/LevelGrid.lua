@@ -166,6 +166,21 @@ function LevelGrid:convertPositionAndSizeFromPixelsToGrid(pixelPosition, objectS
     return positionsOccupied
 end
 
+---@param tilePosition Position Position at the top-left corner of the object
+---@param sizeInTiles Size Size of the object in tiles
+---@return Position[] occupiedTiles The tiles the object occupies
+function LevelGrid:getFootprint(tilePosition, sizeInTiles)
+    ---@type Position[]
+    local occupiedTiles = {}
+    for y = tilePosition.y, tilePosition.y + sizeInTiles.height - 1 do
+        for x = tilePosition.x, tilePosition.x + sizeInTiles.width - 1 do
+            occupiedTiles[#occupiedTiles+1] = {x = x, y = y}
+        end
+    end
+
+    return occupiedTiles
+end
+
 function LevelGrid:isInside(tilePosition, pixelPosition, objectSizeInPixels)
     local positionsOccupied = self:convertPositionAndSizeFromPixelsToGrid(pixelPosition, objectSizeInPixels)
 
