@@ -16,6 +16,3 @@ CURSOR_IMAGE_DATA = {
     ['action-blocked'] = love.image.newImageData('sprites/cursor/mouse_icon5-Blocked.png'),
     ['grab'] = love.image.newImageData('sprites/cursor/mouse_icon3-Hand.png'),
 }
-
-TILE_SIZE = 32
-GRID_SIZE = 60
