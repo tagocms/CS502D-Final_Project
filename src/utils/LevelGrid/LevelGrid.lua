@@ -21,13 +21,17 @@ end
 -- Entity position should be top-left in the grid
 function LevelGrid:initializeGrid()
     self._grid = {}
+    self._occupants = {}
 
     for i = 1, self._gridSize.height do
-        local line = {}
+        local gridLine = {}
+        local occupantsLine = {}
         for j = 1, self._gridSize.width do
-            table.insert(line, j, self._freeTileValue)
+            table.insert(gridLine, j, self._freeTileValue)
+            table.insert(occupantsLine, j, nil)
         end
-        table.insert(self._grid, i, line)
+        table.insert(self._grid, i, gridLine)
+        table.insert(self._occupants, i, occupantsLine)
     end
 
     -- Initialize gridObjects
@@ -94,11 +98,13 @@ end
 function LevelGrid:updateItemTilePositions(item, numberOnGrid)
     for i, position in ipairs(item.lastTilePositions) do
         self:setTile(position, self._freeTileValue)
+        self:setOccupantTile(position, nil)
     end
 
     local newTilePositions = self:convertPositionAndSizeFromPixelsToGrid(item:getPosition(), item:getSize())
     for i, position in ipairs(newTilePositions) do
         self:setTile(position, numberOnGrid)
+        self:setOccupantTile(position, item.ref)
     end
 
     item.lastTilePositions = newTilePositions
@@ -176,17 +182,36 @@ function LevelGrid:isWalkable(tilePosition)
     return self:getTile(tilePosition) == self._freeTileValue
 end
 
+function LevelGrid:isTilePositionValid(tilePosition)
+    return tilePosition.x <= self._gridSize.width
+    and tilePosition.x >= 1
+    and tilePosition.y <= self._gridSize.height
+    and tilePosition.y >= 1
+end
+
 function LevelGrid:getTile(tilePosition)
-    if tilePosition.x > self._gridSize.width or tilePosition.x < 1 
-    or tilePosition.y > self._gridSize.height or tilePosition.y < 1 then
+    if not self:isTilePositionValid(tilePosition) then
         return nil
     end
     return self._grid[tilePosition.y][tilePosition.x]
 end
 
+function LevelGrid:getOccupantInTile(tilePosition)
+    if not self:isTilePositionValid(tilePosition) then
+        return nil
+    end
+    return self._occupants[tilePosition.y][tilePosition.x]
+end
+
 function LevelGrid:setTile(tilePosition, newValue)
-    if self:getTile(tilePosition) then
+    if self:isTilePositionValid(tilePosition) then
         self._grid[tilePosition.y][tilePosition.x] = newValue
+    end
+end
+
+function LevelGrid:setOccupantInTile(tilePosition, newOccupant)
+    if self:isTilePositionValid(tilePosition) then
+        self._occupants[tilePosition.y][tilePosition.x] = newOccupant
     end
 end
 
