@@ -15,11 +15,11 @@ function Player:init(def)
             setMovementTarget = function (position) self:setMovementTarget(position) end
         }
     }
+    self.finder = def.finder
 end
 
 function Player:update(dt, params, canInput)
     Entity.update(self, dt)
-    self.finder = params.finder
     if canInput then
         self.stateMachine:update(dt, params)
     end
@@ -32,9 +32,9 @@ end
 
 function Player:setMovementTarget(position)
     if position then
-        local gridTarget = PlayState.convertPositionFromPixelsToGrid(position, {width = TILE_SIZE, height = TILE_SIZE})
+        local gridTarget = LevelGrid.convertPositionFromPixelsToGrid(position, {width = TILE_SIZE, height = TILE_SIZE})
         local playerPosition = self:getPosition()
-        local currentPosition = PlayState.convertPositionFromPixelsToGrid(playerPosition, {width = TILE_SIZE, height = TILE_SIZE})
+        local currentPosition = LevelGrid.convertPositionFromPixelsToGrid(playerPosition, {width = TILE_SIZE, height = TILE_SIZE})
         self.path, self.pathLength = self.finder:getPath(currentPosition.x, currentPosition.y, gridTarget.x, gridTarget.y)
         self.currentTarget = 1
     else
@@ -49,7 +49,6 @@ function Player:handleMovement(dt)
     if not self.path then return end
 
     local position = self:getPosition()
-    local gridPosition = PlayState.convertPositionFromPixelsToGrid(position, {width = TILE_SIZE, height = TILE_SIZE})
 
     local movementTarget = nil
 

@@ -30,7 +30,9 @@ function PlayState:init(def)
         
         local fixture = love.physics.newFixture(collidableObjectBody, collidableObjectShape)
         fixture:setUserData('Wall')
-        self.collidables[collidableObjectBody] = collidableObjectShape
+        self.collidables[#self.collidables+1] = Collidable {
+            object = object
+        }
     end
 
     self.enemies = {}
@@ -47,7 +49,30 @@ function PlayState:init(def)
         }
     end
 
-    self:calculateGrid()
+    self.levelGrid = LevelGrid {
+        tileSize = {
+            width = self.gameMap.tilewidth,
+            height = self.gameMap.tileheight
+        },
+        gridSize = {
+            width = self.gameMap.width,
+            height = self.gameMap.height
+        },
+        freeTileValue = 0,
+        objects = {
+            ['collidables'] = {
+                items = self.collidables,
+                numberOnGrid = 1
+            },
+            ['enemies'] = {
+                items = self.enemies,
+                numberOnGrid = 2,
+                shouldAddItem = function (item)
+                    return not item.ref:isDestroyed()
+                end
+            }
+        }
+    }
     
     self.camera = Camera()
     self.camera.speed = 1000
@@ -61,7 +86,8 @@ function PlayState:init(def)
         },
         size = ENTITIES['player'].size,
         speed = ENTITIES['player'].speed,
-        world = self.world
+        world = self.world,
+        finder = self.levelGrid.pathfinder
     }
 
     self.collided = {}
@@ -114,15 +140,12 @@ end
 
 function PlayState:update(dt, params)
     local paramsCopy = push_with_keyvalue({}, params)
-    local newFinder = Pathfinder(Grid(self.grid), 'JPS', 0)
-    newFinder:setMode('ORTHOGONAL')
     self.stateStack:update(
         dt,
         push_with_keyvalue(
             paramsCopy,
             {
-                mousePosition = self:convertMousePositionToGame(),
-                finder = newFinder
+                mousePosition = self:convertMousePositionToGame()
             }
         )
     )
@@ -130,7 +153,6 @@ function PlayState:update(dt, params)
     if params.keysPressed:isInteracted('g') then
         self.showDebug = not self.showDebug
     end
-    self:calculateGrid()
 end
 
 function PlayState:setCollision(object)
@@ -143,103 +165,6 @@ function PlayState:handleCollisions()
     end
 
     self.collided = {}
-end
-
--- Grid 1-based
--- Grid indexed as `grid[y][x]`
--- Entity position should be centered in the grid
-function PlayState:calculateGrid()
-    local grid = {}
-    for i = 1, self.gameMap.width do
-        local line = {}
-        for j = 1, self.gameMap.height do
-            table.insert(line, j, 0)
-        end
-        table.insert(grid, i, line)
-    end
-
-    -- Recalculate grid to be 0 in walkable tiles, 1 with collidable objects and 2 with enemies
-    for body, shape in pairs(self.collidables) do
-        local vertices = {shape:getPoints()}
-        local verticesConverted = {}
-        for i = 1, #vertices, 2 do
-            verticesConverted[#verticesConverted+1] = {
-                x = vertices[i],
-                y = vertices[i + 1]
-            }
-        end
-        local minX = verticesConverted[1].x
-        local maxX = verticesConverted[1].x
-        local minY = verticesConverted[1].y
-        local maxY = verticesConverted[1].y
-
-        for i = 2, #verticesConverted do
-            local p = verticesConverted[i]
-            if p.x < minX then minX = p.x end
-            if p.x > maxX then maxX = p.x end
-            if p.y < minY then minY = p.y end
-            if p.y > maxY then maxY = p.y end
-        end
-
-        local objectPosition = {
-            x = body:getX() + minX,
-            y = body:getY() + minY
-        }
-        local objectSize = {
-            width = maxX - minX,
-            height = maxY - minY
-        }
-        local tilePositions = self:convertPositionAndSizeFromPixelsToGrid(objectPosition, objectSize)
-        for i, position in ipairs(tilePositions) do
-            grid[position.y][position.x] = 1
-        end
-    end
-
-    for i, enemy in ipairs(self.enemies) do
-        if not enemy:isDestroyed() then
-            local enemyPosition = enemy:getPosition()
-            enemyPosition = {
-                x = enemyPosition.x - enemy.size.width / 2,
-                y = enemyPosition.y - enemy.size.height / 2
-            }
-            local tilePositions = self:convertPositionAndSizeFromPixelsToGrid(enemyPosition, enemy.size)
-            for i, position in ipairs(tilePositions) do
-               grid[position.y][position.x] = 2
-            end
-        end
-    end
-
-    self.grid = grid
-end
-
-function PlayState.convertPositionFromPixelsToGrid(pixelPosition, tileSize)
-    local tileWidth, tileHeight = tileSize.width, tileSize.height
-
-    local x = math.floor(pixelPosition.x / tileWidth) + 1
-    local y = math.floor(pixelPosition.y / tileHeight) + 1
-    local tilePosition = {
-        x = x,
-        y = y
-    }
-
-    return tilePosition
-end
-
-function PlayState:convertPositionAndSizeFromPixelsToGrid(pixelPosition, objectSize)
-    local tileWidth, tileHeight = self.gameMap.tilewidth, self.gameMap.tileheight
-
-    local first = PlayState.convertPositionFromPixelsToGrid(pixelPosition, {width = tileWidth, height = tileHeight})
-    local lastX = math.ceil((pixelPosition.x + objectSize.width) / tileWidth)
-    local lastY = math.ceil((pixelPosition.y + objectSize.height) / tileHeight)
-
-    local positionsOccupied = {}
-    for x = math.max(1, first.x), math.min(self.gameMap.width, lastX) do
-        for y = math.max(1, first.y), math.min(self.gameMap.height, lastY) do
-            positionsOccupied[#positionsOccupied+1] = {x = x, y = y}
-        end
-    end
-
-    return positionsOccupied
 end
 
 function PlayState:draw()
@@ -256,16 +181,11 @@ function PlayState:draw()
         self.gameMap:drawLayer(self.gameMap.layers["Foreground"])
         
         if self.showDebug then
-            for i, line in ipairs(self.grid) do
-                for j, cell in ipairs(line) do
-                    love.graphics.printf(cell, (j - 1) * TILE_SIZE, (i - 1) * TILE_SIZE, TILE_SIZE, 'center', nil, nil, nil, nil, -8)
-                    love.graphics.rectangle('line', (j - 1) * TILE_SIZE, (i - 1) * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-                end
-            end
+            self.levelGrid:draw()
         end
 
         local mous = self:convertMousePositionToGame()
-        love.graphics.rectangle('line', mous.x - 16, mous.y - 16, TILE_SIZE, TILE_SIZE)
+        love.graphics.rectangle('line', mous.x - TILE_SIZE / 2, mous.y - TILE_SIZE / 2, TILE_SIZE, TILE_SIZE)
     self.camera:detach()
     self.stateStack:draw()
 end
