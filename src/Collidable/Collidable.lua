@@ -4,10 +4,6 @@ function Collidable:init(def)
     local object = def.object
 
     local isPolygon = object.shape == 'polygon'
-    self.position = {
-        x = object.x,
-        y = object.y
-    }
     if isPolygon then
         local vertices = object.polygon
         local minX = vertices[1].x
@@ -27,10 +23,18 @@ function Collidable:init(def)
             width = maxX - minX,
             height = maxY - minY
         }
+        self.position = {
+            x = minX,
+            y = minY
+        }
     else
         self.size = {
             width = object.width,
             height = object.height
+        }
+        self.position = {
+            x = object.x,
+            y = object.y
         }
     end
 end
