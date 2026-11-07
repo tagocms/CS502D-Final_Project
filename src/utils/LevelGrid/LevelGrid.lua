@@ -231,6 +231,49 @@ function LevelGrid:move(entity, newTilePosition)
     return true
 end
 
+---Returns all valid positions for the entity in the grid
+---@param entity GridObject Entity to check
+---@return Position[] invalidPositions Valid positions in the whole grid for the entity
+function LevelGrid:getValidPositionsFor(entity)
+    ---@type Position[]
+    local validPositions = {}
+
+    for y = 1, #self._grid do
+        for x = 1, #self._grid[y] do
+            local tilePosition = {x = x, y = y}
+            if self:isAreaFree(tilePosition, entity.size, {entity}) then
+                validPositions[#validPositions+1] = tilePosition
+            end
+        end
+    end
+
+    return validPositions
+end
+
+---Gets the path, if valid, to target position
+---@param from Position Origin tile
+---@param to Position Destination tile
+---@param entity GridObject Object to move from origin to destination
+---@return JumperPath? path Path from origin to the destination, if possible and/or valid
+function LevelGrid:getPath(from, to, entity)
+    local validPositions = self:getValidPositionsFor(entity)
+    local gridCopy = deepcopy(self._grid)
+    
+    for y = 1, #gridCopy do 
+        for x = 1, #gridCopy[y] do
+            local position = {x = x, y = y}
+            if not table.contains(validPositions, position, true) then
+                gridCopy[y][x] = nil
+            end
+        end
+    end
+
+    ---@type Pathfinder
+    local finder = Pathfinder:new(Grid:new(gridCopy), nil, self._freeTileValue)
+
+    return finder:getPath(from.x, from.y, to.x, to.y)
+end
+
 function LevelGrid:isInside(tilePosition, pixelPosition, objectSizeInPixels)
     local positionsOccupied = self:convertPositionAndSizeFromPixelsToGrid(pixelPosition, objectSizeInPixels)
 
