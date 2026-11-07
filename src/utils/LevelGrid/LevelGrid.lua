@@ -1,4 +1,13 @@
+---@class LevelGrid
+---@field _tileSize Size
+---@field _gridSize Size
+---@field _freeTileValue integer
+---@field _grid integer[][]
+---@field _occupants GridObject[][]
+---@field pathfinder Pathfinder
 LevelGrid = Class{}
+
+---@alias GridObject {size: Size, position: Position, numberOnGrid: integer, occupiedTiles: Position[]}
 
 function LevelGrid:init(def)
     self._tileSize = def.tileSize or {
@@ -24,7 +33,9 @@ function LevelGrid:initializeGrid()
     self._occupants = {}
 
     for i = 1, self._gridSize.height do
+        ---@type integer[]
         local gridLine = {}
+        ---@type GridObject[]
         local occupantsLine = {}
         for j = 1, self._gridSize.width do
             table.insert(gridLine, j, self._freeTileValue)
@@ -181,6 +192,45 @@ function LevelGrid:getFootprint(tilePosition, sizeInTiles)
     return occupiedTiles
 end
 
+---Places an entity inside the specified tile position, anchored to its top-left corner
+---@param entity GridObject Entity to place
+---@param tilePosition Position Position to be placed
+---@return boolean wasAbleToPlace If the placement of the entity was successful 
+function LevelGrid:place(entity, tilePosition)
+    if not self:isAreaFree(tilePosition, entity.size, {entity}) then return false end
+
+    local tilesToOccupy = self:getFootprint(tilePosition, entity.size)
+    for i, tilesToOccupy in ipairs(tilesToOccupy) do
+        self:setTile(tilesToOccupy, entity.numberOnGrid)
+        self:setOccupantInTile(tilesToOccupy, entity)
+    end
+    entity.occupiedTiles = tilesToOccupy
+
+    return true
+end
+
+---Removes an entity from a tile
+---@param entity GridObject Entity to remove from occupied tiles
+function LevelGrid:remove(entity)
+    for i, occupiedTile in ipairs(entity.occupiedTiles) do
+        self:setTile(occupiedTile, self._freeTileValue)
+        self:setOccupantInTile(occupiedTile, nil)
+    end
+    entity.occupiedTiles = {}
+end
+
+---Moves the entity to a new position
+---@param entity GridObject
+---@param newTilePosition Position
+---@return boolean wasAbleToMove If the movement of the entity was successful 
+function LevelGrid:move(entity, newTilePosition)
+    if not self:isAreaFree(newTilePosition, entity.size, {entity}) then return false end
+    self:remove(entity)
+    self:place(entity, newTilePosition)
+
+    return true
+end
+
 function LevelGrid:isInside(tilePosition, pixelPosition, objectSizeInPixels)
     local positionsOccupied = self:convertPositionAndSizeFromPixelsToGrid(pixelPosition, objectSizeInPixels)
 
@@ -193,10 +243,20 @@ function LevelGrid:isInside(tilePosition, pixelPosition, objectSizeInPixels)
     return false
 end
 
+---Checks if the destination tile is walkable
+---@param tilePosition Position The target tile's position
+---@return boolean isWalkable If the target tile is walkable
 function LevelGrid:isWalkable(tilePosition)
-    return self:getTile(tilePosition) == self._freeTileValue
+    if not self:isTilePositionValid(tilePosition) then
+        return false
+    else
+        return self:getTile(tilePosition) == self._freeTileValue
+    end
 end
 
+---Checks if the tile position is inside the LevelGrid
+---@param tilePosition Position
+---@return boolean isTileValid
 function LevelGrid:isTilePositionValid(tilePosition)
     return tilePosition.x <= self._gridSize.width
     and tilePosition.x >= 1
@@ -204,6 +264,9 @@ function LevelGrid:isTilePositionValid(tilePosition)
     and tilePosition.y >= 1
 end
 
+---Returns the number in the tile position, for the pathfinder
+---@param tilePosition Position The position of the tile to check
+---@return integer? numberOnGrid If the tile is valid and if there is an occupant inside the tile, returns its number; else, returns `nil`
 function LevelGrid:getTile(tilePosition)
     if not self:isTilePositionValid(tilePosition) then
         return nil
@@ -211,6 +274,9 @@ function LevelGrid:getTile(tilePosition)
     return self._grid[tilePosition.y][tilePosition.x]
 end
 
+---Returns the occupant in the tile position
+---@param tilePosition Position The position of the tile to check
+---@return GridObject? occupant If the tile is valid and if there is an occupant inside the tile, returns it; else, returns `nil`
 function LevelGrid:getOccupantInTile(tilePosition)
     if not self:isTilePositionValid(tilePosition) then
         return nil
@@ -230,6 +296,11 @@ function LevelGrid:setOccupantInTile(tilePosition, newOccupant)
     end
 end
 
+---Checks if the target area is free and can be moved into.
+---@param tilePosition Position The target position
+---@param sizeInTiles Size The size, in tiles, of the object
+---@param entitiesToIgnore GridObject[] The references to entities to ignore
+---@return boolean isAreaFree The result, if the area is free or not
 function LevelGrid:isAreaFree(tilePosition, sizeInTiles, entitiesToIgnore)
     if not tilePosition then return false end
 
@@ -240,7 +311,7 @@ function LevelGrid:isAreaFree(tilePosition, sizeInTiles, entitiesToIgnore)
         for x = tilePosition.x, tilePosition.x + sizeInTiles.width - 1 do
             local position = {x = x, y = y}
             if not self:isWalkable(position)
-                and not table.contains(entitiesToIgnore, self:getTile(position)) then
+                and not table.contains(entitiesToIgnore, self:getOccupantInTile(position)) then
                 return false
             end
         end
