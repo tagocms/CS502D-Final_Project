@@ -1,5 +1,17 @@
+---@class Animatable
+---@field size Size
+---@field position Position
+---@field animations table<string, Animation>
+---@field currentAnimation Animation?
 Animatable = Class{}
 
+---@class AnimatableDef
+---@field position Position
+---@field size Size
+---@field animations table<string, AnimationDef>
+---@field defaultAnimation string?
+
+---@param def AnimatableDef Initialization definitions for Animatable class
 function Animatable:init(def)
     self.position = {
         x = def.position.x or 0,
@@ -13,6 +25,8 @@ function Animatable:init(def)
     self:initializeAnimations(def.animations, def.defaultAnimation)
 end
 
+---@param animations AnimationDef[] Raw animation data to be constructed into a <string, Animation> table
+---@param defaultAnimation string Name of the default animation
 function Animatable:initializeAnimations(animations, defaultAnimation)
     local defaultAnimation = defaultAnimation or 'idle'
 
@@ -27,6 +41,7 @@ function Animatable:initializeAnimations(animations, defaultAnimation)
         self.animations[key] = newAnimation
     end
 
+    ---@type Animation?
     local currentAnimation
     if self.animations[defaultAnimation] then
         currentAnimation = self.animations[defaultAnimation]
@@ -48,8 +63,8 @@ function Animatable:setCurrentAnimation(newAnimation)
 end
 
 function Animatable:draw(scaleX, scaleY, offsetX, offsetY)
-    if not self.currentAnimation then return end
     local anim = self.currentAnimation
+    if not anim then return end
 
     local scaleX = scaleX or 1
     local scaleY = scaleY or 1
@@ -57,7 +72,7 @@ function Animatable:draw(scaleX, scaleY, offsetX, offsetY)
     local offsetY = offsetY or nil
 
     love.graphics.draw(
-        TEXTURES[anim.texture], FRAMES[anim.texture][anim:getCurrentFrame()], 
+        TEXTURES[anim.texture], FRAMES[anim.texture][anim:getCurrentFrame()],
         self.position.x, self.position.y,
         nil,
         scaleX, scaleY,

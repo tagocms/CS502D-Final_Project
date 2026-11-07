@@ -1,5 +1,11 @@
+---@class Entity: Animatable
+---@field physics table
 Entity = Class{__includes = Animatable}
 
+---@class EntityDef: AnimatableDef
+---@field world love.World?
+
+---@param def EntityDef 
 function Entity:init(def)
     Animatable.init(self, def)
 

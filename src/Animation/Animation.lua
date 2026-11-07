@@ -8,8 +8,19 @@
     cogden@cs50.harvard.edu
 ]]
 
+---@class Animation
+---@field frames integer[]
+---@field interval number
+---@field texture string
+---@field looping boolean
+---@field timer number
+---@field currentFrame integer
+---@field timesPlayed integer
 Animation = Class{}
 
+---@alias AnimationDef {frames: integer[], interval: number, texture: string, looping: boolean} 
+
+---@param def AnimationDef Initialization definitions for Animation class
 function Animation:init(def)
     self.frames = def.frames
     self.interval = def.interval

@@ -1,5 +1,15 @@
+---@class Player: Entity
+---@field speed number?
+---@field finder Pathfinder
 Player = Class{ __includes = Entity }
 
+---@class PlayerDef: EntityDef
+---@field speed number?
+---@field finder Pathfinder
+---@field path JumperNode[]?
+---@field currentTarget integer?
+
+---@param def PlayerDef Initialization definitions for Player class
 function Player:init(def)
     Entity.init(self, def)
     self.speed = def.speed or 0
@@ -35,12 +45,11 @@ function Player:setMovementTarget(position)
         local gridTarget = LevelGrid.convertPositionFromPixelsToGrid(position, {width = TILE_SIZE, height = TILE_SIZE})
         local playerPosition = self:getPosition()
         local currentPosition = LevelGrid.convertPositionFromPixelsToGrid(playerPosition, {width = TILE_SIZE, height = TILE_SIZE})
-        self.path, self.pathLength = self.finder:getPath(currentPosition.x, currentPosition.y, gridTarget.x, gridTarget.y)
+        self.path = self.finder:getPath(currentPosition.x, currentPosition.y, gridTarget.x, gridTarget.y)
         self.currentTarget = 1
     else
         self:setLinearVelocity(0, 0)
         self.path = nil
-        self.pathLength = nil
         self.currentTarget = nil
     end
 end
