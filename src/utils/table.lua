@@ -43,9 +43,27 @@ function push_with_keyvalue(T, other)
     return T
 end
 
-function table.contains(T, item)
+function table.deepEquals(a, b, seen)
+    if a == b then return true end
+    if type(a) ~= 'table' or type(b) ~= 'table' then return false end
+
+    seen = seen or {}
+    if seen[a] == b then return true end
+    seen[a] = b
+
+    for key, value in pairs(a) do
+        if not table.deepEquals(value, b[key], seen) then return false end
+    end
+    for key in pairs(b) do
+        if a[key] == nil then return false end
+    end
+
+    return true
+end
+
+function table.contains(T, item, deep)
     for i, value in ipairs(T) do
-        if value == item then
+        if value == item or (deep and table.deepEquals(value, item)) then
             return true
         end
     end
