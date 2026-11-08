@@ -11,14 +11,15 @@ LevelGrid = Class{}
 
 function LevelGrid:init(def)
     self._tileSize = def.tileSize or {
-        width = TILE_SIZE,
-        height = TILE_SIZE
+        width = 32,
+        height = 32
     }
     self._gridSize = def.gridSize or {
-        width = GRID_SIZE,
-        height = GRID_SIZE
+        width = 32,
+        height = 32
     }
     self._freeTileValue = def.freeTileValue or 0
+    self._occupiedTileValue = def.occupiedTileValue or self._freeTileValue + 1
 
     self:initializeGrid()
     self:initializePathfinder()
@@ -48,21 +49,6 @@ end
 function LevelGrid:initializePathfinder()
     self.pathfinder = Pathfinder(Grid:new(self._grid), 'JPS', self._freeTileValue)
     self.pathfinder:setMode('ORTHOGONAL')
-end
-
-function LevelGrid:updateItemTilePositions(item, numberOnGrid)
-    for i, position in ipairs(item.lastTilePositions) do
-        self:setTile(position, self._freeTileValue)
-        self:setOccupantInTile(position, nil)
-    end
-
-    local newTilePositions = self:convertPositionAndSizeFromPixelsToGrid(item:getPosition(), item:getSize())
-    for i, position in ipairs(newTilePositions) do
-        self:setTile(position, numberOnGrid)
-        self:setOccupantInTile(position, item.ref)
-    end
-
-    item.lastTilePositions = newTilePositions
 end
 
 function LevelGrid.convertPositionFromGridToPixels(tilePosition, tileSize, center)
@@ -141,7 +127,10 @@ end
 ---@param tilePosition Position Position to be placed
 ---@return boolean wasAbleToPlace If the placement of the entity was successful 
 function LevelGrid:place(entity, tilePosition)
-    if not self:isAreaFree(tilePosition, entity.size, {entity}) then return false end
+    if not self:isAreaFree(tilePosition, entity.size, {entity})
+    or (entity.occupiedTiles and #entity.occupiedTiles > 0) then
+        return false
+    end
 
     local tilesToOccupy = self:getFootprint(tilePosition, entity.size)
     for i, tilesToOccupy in ipairs(tilesToOccupy) do
@@ -175,23 +164,29 @@ function LevelGrid:move(entity, newTilePosition)
     return true
 end
 
----Returns all valid positions for the entity in the grid
+---@alias TilePositionValid {x: integer, y: integer, isTileValid: boolean}
+
+---Returns all positions for the entity in the grid, marked as valid or invalid
 ---@param entity GridObject Entity to check
----@return Position[] invalidPositions Valid positions in the whole grid for the entity
+---@return TilePositionValid[] positions Positions in the whole grid for the entity, marked as valid or invalid
 function LevelGrid:getValidPositionsFor(entity)
-    ---@type Position[]
-    local validPositions = {}
+    ---@type TilePositionValid[]
+    local positions = {}
 
     for y = 1, #self._grid do
         for x = 1, #self._grid[y] do
             local tilePosition = {x = x, y = y}
             if self:isAreaFree(tilePosition, entity.size, {entity}) then
-                validPositions[#validPositions+1] = tilePosition
+                tilePosition.isTileValid = true
+                positions[#positions+1] = tilePosition
+            else
+                tilePosition.isTileValid = false
+                positions[#positions+1] = tilePosition
             end
         end
     end
 
-    return validPositions
+    return positions
 end
 
 ---Gets the path, if valid, to target position
@@ -200,20 +195,20 @@ end
 ---@param entity GridObject Object to move from origin to destination
 ---@return JumperPath? path Path from origin to the destination, if possible and/or valid
 function LevelGrid:getPath(from, to, entity)
-    local validPositions = self:getValidPositionsFor(entity)
+    local positions = self:getValidPositionsFor(entity)
     local gridCopy = deepcopy(self._grid)
-    
-    for y = 1, #gridCopy do 
-        for x = 1, #gridCopy[y] do
-            local position = {x = x, y = y}
-            if not table.contains(validPositions, position, true) then
-                gridCopy[y][x] = nil
-            end
+
+    for i, position in ipairs(positions) do
+        if position.isTileValid then
+            gridCopy[position.y][position.x] = self._freeTileValue
+        else
+            gridCopy[position.y][position.x] = self._occupiedTileValue
         end
     end
 
     ---@type Pathfinder
     local finder = Pathfinder:new(Grid:new(gridCopy), nil, self._freeTileValue)
+    finder:setMode('ORTHOGONAL')
 
     return finder:getPath(from.x, from.y, to.x, to.y)
 end
@@ -260,13 +255,13 @@ function LevelGrid:getCenterPixel(tilePositionAnchor, sizeInTiles)
     local isEntityWidthEven, isEntityHeightEven = entityWidth % 2 == 0, entityHeight % 2 == 0
 
     local centerTilePosition = {
-        x = tilePositionAnchor.x + math.floor(entityWidth / 2 + 0.5),
-        y = tilePositionAnchor.y + math.floor(entityHeight / 2 + 0.5)
+        x = tilePositionAnchor.x + math.floor(entityWidth / 2),
+        y = tilePositionAnchor.y + math.floor(entityHeight / 2)
     }
 
     centerPixelPosition = {
-        x = centerTilePosition.x * self._tileSize.width + (not isEntityWidthEven and self._tileSize.width / 2 or 0),
-        y = centerTilePosition.y * self._tileSize.height + (not isEntityHeightEven and self._tileSize.height / 2 or 0),
+        x = (centerTilePosition.x - 1) * self._tileSize.width + (not isEntityWidthEven and self._tileSize.width / 2 or 0),
+        y = (centerTilePosition.y - 1) * self._tileSize.height + (not isEntityHeightEven and self._tileSize.height / 2 or 0),
     }
 
     return centerPixelPosition
