@@ -95,7 +95,7 @@ describe('LevelGrid class tests', function ()
         it('Defaults tile size to TILE_SIZE', function ()
             local levelGrid = LevelGrid {}
 
-            assert.are.same({width = TILE_SIZE, height = TILE_SIZE}, levelGrid._tileSize)
+            assert.are.same({width = 32, height = 32}, levelGrid._tileSize)
         end)
 
         it('Correctly initializes grid size', function ()
@@ -107,7 +107,7 @@ describe('LevelGrid class tests', function ()
         it('Defaults grid size to GRID_SIZE', function ()
             local levelGrid = LevelGrid {}
 
-            assert.are.same({width = GRID_SIZE, height = GRID_SIZE}, levelGrid._gridSize)
+            assert.are.same({width = 32, height = 32}, levelGrid._gridSize)
         end)
 
         it('Correctly initializes free tile value', function ()
