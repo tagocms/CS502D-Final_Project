@@ -20,7 +20,6 @@ function LevelGrid:init(def)
     }
     self._freeTileValue = def.freeTileValue or 0
 
-    self:initializeGridObjects(def.objects)
     self:initializeGrid()
     self:initializePathfinder()
 end
@@ -44,66 +43,11 @@ function LevelGrid:initializeGrid()
         table.insert(self._grid, i, gridLine)
         table.insert(self._occupants, i, occupantsLine)
     end
-
-    -- Initialize gridObjects
-    self:initializeGridObjectsPositions()
-end
-
-function LevelGrid:initializeGridObjects(objects)
-    self._gridObjects = {}
-    if not objects then return end
-
-    for k, object in pairs(objects) do
-        self:addGridObject(k, object)
-    end
 end
 
 function LevelGrid:initializePathfinder()
     self.pathfinder = Pathfinder(Grid:new(self._grid), 'JPS', self._freeTileValue)
     self.pathfinder:setMode('ORTHOGONAL')
-end
-
-function LevelGrid:initializeGridObjectsPositions()
-    for k, gridObject in pairs(self._gridObjects) do
-        for i, item in pairs(gridObject.items) do
-            if gridObject.shouldAddItem(item) then
-                self:updateItemTilePositions(item, gridObject.numberOnGrid)
-            end
-        end
-    end
-end
-
-function LevelGrid:addGridObject(key, object)
-    local gridObjectItems = {}
-    for i, item in ipairs(object.items or {}) do
-        gridObjectItems[item] = LevelGridObjectItem {
-            ref = item
-        }
-    end
-    self._gridObjects[key] = LevelGridObject {
-        numberOnGrid = object.numberOnGrid,
-        shouldAddItem = object.shouldAddItem,
-        items = gridObjectItems
-    }
-end
-
-function LevelGrid:deleteGridObject(key)
-    if not self._gridObjects[key] then return end
-    for key, item in pairs(self._gridObjects[key].items) do
-        self:updateItemTilePositions(item, self._freeTileValue)
-    end
-    self._gridObjects[key] = nil
-end
-
-function LevelGrid:updateGridObject(gridObjectKey, updatedItemsRefs)
-    if not self._gridObjects[gridObjectKey] then return end
-
-    for i, itemRef in ipairs(updatedItemsRefs) do
-        if self._gridObjects[gridObjectKey].items[itemRef] then
-            local itemInGridObject = self._gridObjects[gridObjectKey].items[itemRef]
-            self:updateItemTilePositions(itemInGridObject, self._gridObjects[gridObjectKey].numberOnGrid)
-        end
-    end
 end
 
 function LevelGrid:updateItemTilePositions(item, numberOnGrid)
