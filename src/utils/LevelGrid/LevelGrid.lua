@@ -354,11 +354,16 @@ function LevelGrid:distanceBetweenEntities(firstEntity, secondEntity)
     return minDistance
 end
 
-function LevelGrid:isInside(tilePosition, pixelPosition, objectSizeInPixels)
-    local positionsOccupied = self:convertPositionAndSizeFromPixelsToGrid(pixelPosition, objectSizeInPixels)
+---Checks if an antity with a given anchor and size in tiles is inside the target tile position
+---@param targetTilePosition Position Target tile's position
+---@param anchorTilePosition Position Entity's anchor tile's position
+---@param sizeInTiles Size Entity's size in tiles
+---@return boolean isInside `true` if the entity is inside the tile; `false` if not.
+function LevelGrid:isInside(targetTilePosition, anchorTilePosition, sizeInTiles)
+    local positionsOccupied = self:getFootprint(anchorTilePosition, sizeInTiles)
 
     for i, position in ipairs(positionsOccupied) do
-        if position.x == tilePosition.x and position.y == tilePosition.y then
+        if position.x == targetTilePosition.x and position.y == targetTilePosition.y then
             return true
         end
     end
@@ -418,7 +423,7 @@ end
 
 ---Sets the occupant in the tile position if it's valid.
 ---@param tilePosition Position Tile position to have its value changed
----@param newOccupant GridObject New occupant
+---@param newOccupant GridObject? New occupant
 function LevelGrid:setOccupantInTile(tilePosition, newOccupant)
     if self:isTilePositionValid(tilePosition) then
         self._occupants[tilePosition.y][tilePosition.x] = newOccupant
