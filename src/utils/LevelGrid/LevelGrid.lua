@@ -9,6 +9,14 @@ LevelGrid = Class{}
 
 ---@alias GridObject {size: Size, position: Position, numberOnGrid: integer, occupiedTiles: Position[]}
 
+---@class LevelGridDef
+---@field tileSize Size
+---@field gridSize Size
+---@field freeTileValue integer
+---@field occupiedTileValue integer
+
+---Initializes a LevelGrid object
+---@param def LevelGridDef Initialization definitions for LevelGrid class
 function LevelGrid:init(def)
     self._tileSize = def.tileSize or {
         width = 32,
@@ -25,9 +33,8 @@ function LevelGrid:init(def)
     self:initializePathfinder()
 end
 
--- Grid 1-based
--- Grid indexed as `grid[y][x]`
--- Entity position should be top-left in the grid
+---Initializes the grid. 
+---Grid is 1-based, indexed at `grid[y][x]` and entity anchor positions are top-left aligned
 function LevelGrid:initializeGrid()
     self._grid = {}
     self._occupants = {}
@@ -46,17 +53,24 @@ function LevelGrid:initializeGrid()
     end
 end
 
+---Initializes the pathfinder object.
 function LevelGrid:initializePathfinder()
     self.pathfinder = Pathfinder(Grid:new(self._grid), 'JPS', self._freeTileValue)
     self.pathfinder:setMode('ORTHOGONAL')
 end
 
+---Converts a given position from tile to pixel space
+---@param tilePosition Position Target tile position
+---@param tileSize Size Grid tile size
+---@param center boolean Default: `false`. If the conversion should return the pixel position centered or top-left aligned to the target tile
+---@return Position pixelPosition The position, in pixels, of the given tile position (centered or top-left aligned)
 function LevelGrid.convertPositionFromGridToPixels(tilePosition, tileSize, center)
     local tileWidth, tileHeight = tileSize.width, tileSize.height
     local center = center or false
 
     local x = (tilePosition.x - 1) * tileWidth + (center and tileWidth / 2 or 0)
     local y = (tilePosition.y - 1) * tileHeight + (center and tileHeight / 2 or 0)
+    ---@type Position
     local pixelPosition = {
         x = x,
         y = y
@@ -65,19 +79,30 @@ function LevelGrid.convertPositionFromGridToPixels(tilePosition, tileSize, cente
     return pixelPosition
 end
 
+---Converts a given position from tile to pixel space, utilizing this instance's tileSize and top-left aligned
+---@param tilePosition Position Target tile position
+---@return Position pixelPosition The position, in pixels, of the given tile position (top-left aligned)
 function LevelGrid:convertPositionToPixelsInTileStart(tilePosition)
     return LevelGrid.convertPositionFromGridToPixels(tilePosition, self._tileSize, false)
 end
 
+---Converts a given position from tile to pixel space, utilizing this instance's tileSize and center aligned
+---@param tilePosition Position Target tile position
+---@return Position pixelPosition The position, in pixels, of the given tile position (center aligned)
 function LevelGrid:convertPositionToPixelsInTileCenter(tilePosition)
     return LevelGrid.convertPositionFromGridToPixels(tilePosition, self._tileSize, true)
 end
 
+---Converts a given position from pixel to tile space
+---@param pixelPosition Position Target pixel position
+---@param tileSize Size Grid tile size
+---@return Position tilePosition The position, in tile space, of the given pixel position
 function LevelGrid.convertPositionFromPixelsToGrid(pixelPosition, tileSize)
     local tileWidth, tileHeight = tileSize.width, tileSize.height
 
     local x = math.floor(pixelPosition.x / tileWidth) + 1
     local y = math.floor(pixelPosition.y / tileHeight) + 1
+    ---@type Position
     local tilePosition = {
         x = x,
         y = y
@@ -86,10 +111,17 @@ function LevelGrid.convertPositionFromPixelsToGrid(pixelPosition, tileSize)
     return tilePosition
 end
 
+---Converts a given position from pixel to tile space, utilizing this instance's tileSize
+---@param pixelPosition Position Target pixel position
+---@return Position tilePosition The position, in tile space, of the given pixel position
 function LevelGrid:convertPositionToGrid(pixelPosition)
     return LevelGrid.convertPositionFromPixelsToGrid(pixelPosition, self._tileSize)
 end
 
+---Calculates an object's occupied tiles, considering the object's anchor and size in pixels
+---@param pixelPosition Position Target pixel position
+---@param objectSizeInPixels any The object's size, in pixels
+---@return Position[] occupiedPositions The object's footprint, in tile space
 function LevelGrid:convertPositionAndSizeFromPixelsToGrid(pixelPosition, objectSizeInPixels)
     local tileWidth, tileHeight = self._tileSize.width, self._tileSize.height
 
@@ -97,6 +129,7 @@ function LevelGrid:convertPositionAndSizeFromPixelsToGrid(pixelPosition, objectS
     local lastX = math.ceil((pixelPosition.x + objectSizeInPixels.width) / tileWidth)
     local lastY = math.ceil((pixelPosition.y + objectSizeInPixels.height) / tileHeight)
 
+    ---@type Position[]
     local positionsOccupied = {}
     for x = math.max(1, first.x), math.min(self._gridSize.width, lastX) do
         for y = math.max(1, first.y), math.min(self._gridSize.height, lastY) do
