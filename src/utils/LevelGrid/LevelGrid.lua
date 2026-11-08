@@ -274,6 +274,37 @@ function LevelGrid:getPath(from, to, entity)
     return finder:getPath(from.x, from.y, to.x, to.y)
 end
 
+---Gets the tile position anchor from a pixel position and the entity's size in tiles
+---@param pixelPosition Position Position, in pixels
+---@param sizeInTiles Size Size, in tiles, of the entity
+---@return Position tilePosition Anchor for the entity (given its size) on the grid
+function LevelGrid:tilePositionFromPixel(pixelPosition, sizeInTiles)
+    ---@type Position
+    local tilePosition
+    local entityWidth, entityHeight = sizeInTiles.width, sizeInTiles.height
+    local isEntityWidthEven, isEntityHeightEven = entityWidth % 2 == 0, entityHeight % 2 == 0
+
+    ---@type integer
+    local tileX, tileY
+    if isEntityWidthEven then
+        tileX = math.floor(pixelPosition.x / self._tileSize.width + 0.5) + 1 - (entityWidth / 2)
+    else
+        tileX = math.floor(pixelPosition.x / self._tileSize.width) + 1 - math.floor(entityWidth / 2)
+    end
+
+    if isEntityHeightEven then
+        tileY = math.floor(pixelPosition.y / self._tileSize.height + 0.5) + 1 - (entityHeight / 2)
+    else
+        tileY = math.floor(pixelPosition.y / self._tileSize.height) + 1 - math.floor(entityHeight / 2)
+    end
+
+    tilePosition = {
+        x = tileX,
+        y = tileY
+    }
+    return tilePosition
+end
+
 function LevelGrid:isInside(tilePosition, pixelPosition, objectSizeInPixels)
     local positionsOccupied = self:convertPositionAndSizeFromPixelsToGrid(pixelPosition, objectSizeInPixels)
 
