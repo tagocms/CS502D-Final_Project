@@ -328,6 +328,32 @@ function LevelGrid:getCenterPixel(tilePositionAnchor, sizeInTiles)
     return centerPixelPosition
 end
 
+---Distance between the first and second entities, given their positions and footprints
+---@param firstEntity GridObject First entity
+---@param secondEntity GridObject Second entity
+---@return number minDistance The minimum distance between both entities
+function LevelGrid:distanceBetweenEntities(firstEntity, secondEntity)
+    ---@type number?
+    local minDistance = nil
+
+    local firstEntityFootprint = self:getFootprint(firstEntity.position, firstEntity.size)
+    local secondEntityFootprint = self:getFootprint(secondEntity.position, secondEntity.size)
+
+    for i, firstEntityPosition in ipairs(firstEntityFootprint) do
+        for j, secondEntityPosition in ipairs(secondEntityFootprint) do
+            local deltaX, deltaY = firstEntityPosition.x - secondEntityPosition.x, firstEntityPosition.y - secondEntityPosition.y
+            local distance = math.sqrt((deltaX * deltaX) + (deltaY * deltaY))
+            if not minDistance then
+                minDistance = distance
+            elseif distance < minDistance then
+                minDistance = distance
+            end
+        end
+    end
+
+    return minDistance
+end
+
 function LevelGrid:isInside(tilePosition, pixelPosition, objectSizeInPixels)
     local positionsOccupied = self:convertPositionAndSizeFromPixelsToGrid(pixelPosition, objectSizeInPixels)
 
