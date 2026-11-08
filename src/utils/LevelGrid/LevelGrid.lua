@@ -305,6 +305,29 @@ function LevelGrid:tilePositionFromPixel(pixelPosition, sizeInTiles)
     return tilePosition
 end
 
+---Gets the center pixel position for an anchor, given its entity's size in tiles
+---@param tilePositionAnchor Position Entity's tile anchor
+---@param sizeInTiles Size Entity's size in tiles
+---@return Position centerPixelPosition The pixel at the center of the entity, given the anchor and its size in tiles
+function LevelGrid:getCenterPixel(tilePositionAnchor, sizeInTiles)
+    ---@type Position
+    local centerPixelPosition
+    local entityWidth, entityHeight = sizeInTiles.width, sizeInTiles.height
+    local isEntityWidthEven, isEntityHeightEven = entityWidth % 2 == 0, entityHeight % 2 == 0
+
+    local centerTilePosition = {
+        x = tilePositionAnchor.x + math.floor(entityWidth / 2 + 0.5),
+        y = tilePositionAnchor.y + math.floor(entityHeight / 2 + 0.5)
+    }
+
+    centerPixelPosition = {
+        x = centerTilePosition.x * self._tileSize.width + (not isEntityWidthEven and self._tileSize.width / 2 or 0),
+        y = centerTilePosition.y * self._tileSize.height + (not isEntityHeightEven and self._tileSize.height / 2 or 0),
+    }
+
+    return centerPixelPosition
+end
+
 function LevelGrid:isInside(tilePosition, pixelPosition, objectSizeInPixels)
     local positionsOccupied = self:convertPositionAndSizeFromPixelsToGrid(pixelPosition, objectSizeInPixels)
 
