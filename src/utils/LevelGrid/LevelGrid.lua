@@ -327,12 +327,18 @@ function LevelGrid:getOccupantInTile(tilePosition)
     return self._occupants[tilePosition.y][tilePosition.x]
 end
 
+---Sets the value in the tile position if it's valid.
+---@param tilePosition Position Tile position to have its value changed
+---@param newValue integer New value
 function LevelGrid:setTile(tilePosition, newValue)
     if self:isTilePositionValid(tilePosition) then
         self._grid[tilePosition.y][tilePosition.x] = newValue
     end
 end
 
+---Sets the occupant in the tile position if it's valid.
+---@param tilePosition Position Tile position to have its value changed
+---@param newOccupant GridObject New occupant
 function LevelGrid:setOccupantInTile(tilePosition, newOccupant)
     if self:isTilePositionValid(tilePosition) then
         self._occupants[tilePosition.y][tilePosition.x] = newOccupant
@@ -363,6 +369,7 @@ function LevelGrid:isAreaFree(tilePosition, sizeInTiles, entitiesToIgnore)
     return true
 end
 
+---Draws the level grid to the screen.
 function LevelGrid:draw()
     for y, line in ipairs(self._grid) do
         for x, tile in ipairs(line) do
