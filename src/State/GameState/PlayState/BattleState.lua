@@ -19,15 +19,6 @@ function BattleState:update(dt, params)
     self.player:update(dt, params.mouseButtonsDown)
 
     self.stateStack:update(dt, params)
-    self:updatePhysicsWorldAndEntitiesPosition(dt)
-end
-
-function BattleState:updatePhysicsWorldAndEntitiesPosition(dt)
-    self.world:update(dt)
-    for i, enemy in pairs(self.enemies) do
-        enemy:updatePosition()
-    end
-    self.player:updatePosition()
 end
 
 function BattleState:draw()
