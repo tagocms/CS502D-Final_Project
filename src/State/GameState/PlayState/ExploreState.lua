@@ -4,7 +4,6 @@ function ExploreState:init(def)
     self.gameMap = def.gameMap
     self.mapSize = def.mapSize
     self.camera = def.camera
-    self.world = def.world
     self.enemies = def.enemies
     self.player = def.player
     self.getScreenSize = def.getScreenSize
@@ -21,7 +20,6 @@ function ExploreState:update(dt, params)
     for i, enemy in pairs(self.enemies) do
         enemy:update(dt)
     end
-    self:updatePhysicsWorldAndEntitiesPosition(dt)
 
     self:handleInput(dt, params)
     self:updateViews(dt, params)
@@ -94,14 +92,6 @@ function ExploreState:handleCameraMovement(dt, keysDown)
     if self.camera.y > (self.mapSize.height - screenSize.height / 2) then
         self.camera.y = (self.mapSize.height - screenSize.height / 2)
     end
-end
-
-function ExploreState:updatePhysicsWorldAndEntitiesPosition(dt)
-    self.world:update(dt)
-    for i, enemy in pairs(self.enemies) do
-        enemy:updatePosition()
-    end
-    self.player:updatePosition()
 end
 
 function ExploreState:updateViews(dt, params)
