@@ -1,3 +1,7 @@
+---@class StateMachine
+---@field _availableStates string[]
+---@field currentState State
+---@field callbacks function[]
 StateMachine = Class{}
 
 function StateMachine:init(def)
