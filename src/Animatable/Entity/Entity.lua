@@ -1,68 +1,120 @@
 ---@class Entity: Animatable
----@field physics table
+---@field anchorTilePosition Position
+---@field sizeInTiles Size
+---@field speed number? In tiles/second
+---@field numberOnGrid integer
+---@field occupiedTiles Position[]
+---@field path JumperPath?
+---@field isMoving boolean
+---@field isDestroyed boolean
 Entity = Class{__includes = Animatable}
 
 ---@class EntityDef: AnimatableDef
----@field world love.World?
+---@field speed number?
+---@field numberOnGrid integer
+---@field occupiedTiles Position[]?
+---@field levelGrid LevelGrid
 
----@param def EntityDef 
+---@param def EntityDef Initialization definitions for Entity class
 function Entity:init(def)
     Animatable.init(self, def)
+    self.numberOnGrid = def.numberOnGrid
+    self.occupiedTiles = def.occupiedTiles or {}
+    self.levelGrid = def.levelGrid
 
-    local world = def.world
-    if world and (type(world) == "userdata" and world:typeOf("World")) then
-        self:createPhysics(def.world)
-    end
+    self.anchorTilePosition = self.levelGrid:convertPositionToGrid(self.position)
+    self.sizeInTiles = {
+        width = math.ceil(self.size.width / self.levelGrid._tileSize.width),
+        height = math.ceil(self.size.height / self.levelGrid._tileSize.height)
+    }
+
+    self.speed = def.speed or 10
+    self.isMoving = false
+    self.isDestroyed = false
+    self:place()
 end
 
 function Entity:update(dt)
     Animatable.update(self, dt)
-    local xVelocity, yVelocity = self.physics.body:getLinearVelocity()
-    if xVelocity ~= 0 or yVelocity ~= 0 then
+    if self.isMoving then
         self:setCurrentAnimation('walk')
     else
         self:setCurrentAnimation('idle')
     end
 end
 
-function Entity:updatePosition()
-    if not self.physics.body then return end
-    self.position.x = self.physics.body:getX()
-    self.position.y = self.physics.body:getY()
+function Entity:place()
+    self.levelGrid:place(self, self.anchorTilePosition)
+end
+
+function Entity:moveTo(newTilePosition, tweenTime)
+    if not self.isMoving then
+        self:animateMovement(newTilePosition, tweenTime)
+    end
+end
+
+function Entity:remove()
+    self.levelGrid:remove(self)
+    self.isDestroyed = true
+end
+
+function Entity:animateMovement(newTilePosition, tweenTime)
+    self.path = self.levelGrid:getPath(self.anchorTilePosition, newTilePosition, self)
+    if self.path then
+        local length = self.path:getLength()
+        local timePerSegment = tweenTime / length
+        self.isMoving = true
+        for node, count in self.path:iter() do
+            local newPixelPosition = self.levelGrid:convertPositionToPixelsInTileStart({x = node:getX(), y = node:getY()})
+            Timer.after(timePerSegment * count, function ()
+                if not self.levelGrid:move(self, {x = node:getX(), y = node:getY()}) then return end
+                Timer.tween(timePerSegment, {
+                        [self.position] = {x = newPixelPosition.x, y = newPixelPosition.y}
+                })
+                :finish(function ()
+                    self.anchorTilePosition = newTilePosition
+                    if count == length then
+                        self.path = nil
+                        self.isMoving = false
+                    end
+                end)
+            end)
+        end
+    end
+end
+
+
+---Sets the player's movement target to the pixel position
+---@param pixelPosition Position Destination position
+function Entity:setMovementTarget(pixelPosition)
+    local gridTarget = self.levelGrid:convertPositionToGrid(pixelPosition)
+    self:moveTo(
+        gridTarget, 
+        self.levelGrid:distanceBetweenEntities(self, {anchorTilePosition = gridTarget, sizeInTiles = {width = 1, height = 1}}) / self.speed
+    )
 end
 
 function Entity:draw()
-    Animatable.draw(self, 1, 1, self.size.width / 2, self.size.height / 2)
-    love.graphics.polygon('line', self.physics.body:getWorldPoints(self.physics.shape:getPoints()))
-end
-
-function Entity:createPhysics(world)
-    if self.size.width <= 0 or self.size.height <= 0 then return end
-    if self.physics and self.physics.body then
-        self.physics.body:destroy()
+    if self.path then
+        local previousNode
+        local tileSize = self.levelGrid._tileSize
+        local tileWidth, tileHeight = tileSize.width, tileSize.height
+        for node, count in self.path:iter() do
+            if previousNode then
+                love.graphics.line(
+                (previousNode:getX() - 1) * tileWidth + tileWidth / 2,
+                (previousNode:getY() - 1) * tileHeight + tileHeight / 2,
+                (node:getX() - 1) * tileWidth + tileWidth / 2,
+                (node:getY() - 1) * tileHeight + tileHeight / 2
+            )
+            end
+            previousNode = node
+        end
     end
 
-    self.physics = {}
-    self.physics.body = love.physics.newBody(world, self.position.x, self.position.y, 'dynamic')
-    self.physics.body:setFixedRotation(true)
-    self.physics.shape = love.physics.newRectangleShape(self.size.width, self.size.height)
-    self.physics.fixture = love.physics.newFixture(self.physics.body, self.physics.shape)
-    self.physics.fixture:setUserData(self:getClassName())
+    Animatable.draw(self)
 end
 
 function Entity:getClassName()
     return 'Entity'
-end
-
-function Entity:getPosition()
-    local x, y = self.physics.body:getPosition()
-    return { x = x, y = y }
-end
-
-function Entity:getSize()
-    return self.size
-end
-
-function Entity:isDestroyed()
-    return self.physics.body:isDestroyed()
 end
