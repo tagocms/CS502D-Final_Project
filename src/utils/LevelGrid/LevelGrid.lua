@@ -7,7 +7,7 @@
 ---@field pathfinder Pathfinder
 LevelGrid = Class{}
 
----@alias GridObject {size: Size, position: Position, numberOnGrid: integer, occupiedTiles: Position[]}
+---@alias GridObject {sizeInTiles: Size, anchorTilePosition: Position, numberOnGrid: integer, occupiedTiles: Position[]}
 
 ---@class LevelGridDef
 ---@field tileSize Size
@@ -160,12 +160,12 @@ end
 ---@param tilePosition Position Position to be placed
 ---@return boolean wasAbleToPlace If the placement of the entity was successful 
 function LevelGrid:place(entity, tilePosition)
-    if not self:isAreaFree(tilePosition, entity.size, {entity})
+    if not self:isAreaFree(tilePosition, entity.sizeInTiles, {entity})
     or (entity.occupiedTiles and #entity.occupiedTiles > 0) then
         return false
     end
 
-    local tilesToOccupy = self:getFootprint(tilePosition, entity.size)
+    local tilesToOccupy = self:getFootprint(tilePosition, entity.sizeInTiles)
     for i, tilesToOccupy in ipairs(tilesToOccupy) do
         self:setTile(tilesToOccupy, entity.numberOnGrid)
         self:setOccupantInTile(tilesToOccupy, entity)
@@ -190,7 +190,7 @@ end
 ---@param newTilePosition Position
 ---@return boolean wasAbleToMove If the movement of the entity was successful 
 function LevelGrid:move(entity, newTilePosition)
-    if not self:isAreaFree(newTilePosition, entity.size, {entity}) then return false end
+    if not self:isAreaFree(newTilePosition, entity.sizeInTiles, {entity}) then return false end
     self:remove(entity)
     self:place(entity, newTilePosition)
 
@@ -209,7 +209,7 @@ function LevelGrid:getValidPositionsFor(entity)
     for y = 1, #self._grid do
         for x = 1, #self._grid[y] do
             local tilePosition = {x = x, y = y}
-            if self:isAreaFree(tilePosition, entity.size, {entity}) then
+            if self:isAreaFree(tilePosition, entity.sizeInTiles, {entity}) then
                 tilePosition.isTileValid = true
                 positions[#positions+1] = tilePosition
             else
@@ -308,8 +308,8 @@ function LevelGrid:distanceBetweenEntities(firstEntity, secondEntity)
     ---@type number?
     local minDistance = nil
 
-    local firstEntityFootprint = self:getFootprint(firstEntity.position, firstEntity.size)
-    local secondEntityFootprint = self:getFootprint(secondEntity.position, secondEntity.size)
+    local firstEntityFootprint = self:getFootprint(firstEntity.anchorTilePosition, firstEntity.sizeInTiles)
+    local secondEntityFootprint = self:getFootprint(secondEntity.anchorTilePosition, secondEntity.sizeInTiles)
 
     for i, firstEntityPosition in ipairs(firstEntityFootprint) do
         for j, secondEntityPosition in ipairs(secondEntityFootprint) do

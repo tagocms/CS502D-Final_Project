@@ -3,9 +3,10 @@ require 'dependencies'
 describe('LevelGrid class tests', function ()
     -- Grid objects have their size in tiles; `position` is the anchor (top-left tile) of the object
     local createGridObject = function (position, size, numberOnGrid)
+        ---@type GridObject
         return {
-            position = position or {x = 1, y = 1},
-            size = size or {width = 1, height = 1},
+            anchorTilePosition = position or {x = 1, y = 1},
+            sizeInTiles = size or {width = 1, height = 1},
             numberOnGrid = numberOnGrid or 2,
             occupiedTiles = {}
         }
