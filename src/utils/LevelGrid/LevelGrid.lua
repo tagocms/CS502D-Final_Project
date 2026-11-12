@@ -59,6 +59,30 @@ function LevelGrid:initializePathfinder()
     self.pathfinder:setMode('ORTHOGONAL')
 end
 
+---Converts a given size from pixel to tile size
+---@param sizeInPixels Size Size, in pixels
+---@return Size sizeInTiles The input size, converted to tile space
+function LevelGrid:convertSizeToGrid(sizeInPixels)
+    ---@type Size
+    local sizeInTiles = {
+        width = math.ceil(sizeInPixels.width / self._tileSize.width),
+        height = math.ceil(sizeInPixels.height / self._tileSize.height)
+    }
+    return sizeInTiles
+end
+
+---Converts a given size from tiles to pixel size
+---@param sizeInTiles Size Size, in tiles
+---@return Size sizeInPixels The input size, converted to pixel space
+function LevelGrid:convertSizeToPixels(sizeInTiles)
+    ---@type Size
+    local sizeInPixels = {
+        width = sizeInTiles.width * self._tileSize.width,
+        height = sizeInTiles.height * self._tileSize.height
+    }
+    return sizeInPixels
+end
+
 ---Converts a given position from tile to pixel space
 ---@param tilePosition Position Target tile position
 ---@param tileSize Size Grid tile size

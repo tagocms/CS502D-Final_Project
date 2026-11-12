@@ -1,11 +1,23 @@
+---@class Collidable
+---@field levelGrid LevelGrid
+---@field size Size
+---@field position Position
+---@field sizeInTiles Size
+---@field anchorTilePosition Position
+---@field numberOnGrid integer
 Collidable = Class{}
 
+---@class CollidableDef
+---@field object CollidableShape
+---@field levelGrid LevelGrid
+
+---@param def CollidableDef Initilization definitions for Collidable
 function Collidable:init(def)
     local object = def.object
 
     local isPolygon = object.shape == 'polygon'
-    if isPolygon then
-        local vertices = object.polygon
+    local vertices = object.polygon
+    if isPolygon and vertices then
         local minX = vertices[1].x
         local maxX = vertices[1].x
         local minY = vertices[1].y
@@ -37,6 +49,20 @@ function Collidable:init(def)
             y = object.y
         }
     end
+
+    self.numberOnGrid = 1
+    self.levelGrid = def.levelGrid
+    self:initializeTilePositionsAndSize()
+    self:place()
+end
+
+function Collidable:initializeTilePositionsAndSize()
+    self.anchorTilePosition = self.levelGrid:convertPositionToGrid(self.position)
+    self.sizeInTiles = self.levelGrid:convertSizeToGrid(self.size)
+end
+
+function Collidable:place()
+    self.levelGrid:place(self, self.anchorTilePosition)
 end
 
 function Collidable:getPosition()

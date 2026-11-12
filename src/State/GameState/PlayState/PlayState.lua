@@ -23,7 +23,8 @@ function PlayState:init(def)
     self.collidables = {}
     for i, object in pairs(self.gameMap.layers['Collidable'].objects) do
         self.collidables[#self.collidables+1] = Collidable {
-            object = object
+            object = object,
+            levelGrid = self.levelGrid
         }
     end
 
