@@ -23,10 +23,7 @@ function Entity:init(def)
     self.levelGrid = def.levelGrid
 
     self.anchorTilePosition = self.levelGrid:convertPositionToGrid(self.position)
-    self.sizeInTiles = {
-        width = math.ceil(self.size.width / self.levelGrid._tileSize.width),
-        height = math.ceil(self.size.height / self.levelGrid._tileSize.height)
-    }
+    self.sizeInTiles = self.levelGrid:convertSizeToGrid(self.size)
 
     self.speed = def.speed or 10
     self.isMoving = false
@@ -47,9 +44,12 @@ function Entity:place()
     self.levelGrid:place(self, self.anchorTilePosition)
 end
 
-function Entity:moveTo(newTilePosition, tweenTime)
+function Entity:moveTo(newTilePosition)
     if not self.isMoving then
-        self:animateMovement(newTilePosition, tweenTime)
+        self.path = self.levelGrid:getPath(self.anchorTilePosition, newTilePosition, self)
+        if self.path then
+            self:animateMovement(newTilePosition, self.path:getLength() / self.speed)
+        end
     end
 end
 
@@ -59,7 +59,6 @@ function Entity:remove()
 end
 
 function Entity:animateMovement(newTilePosition, tweenTime)
-    self.path = self.levelGrid:getPath(self.anchorTilePosition, newTilePosition, self)
     if self.path then
         local length = self.path:getLength()
         local timePerSegment = tweenTime / length
@@ -88,10 +87,7 @@ end
 ---@param pixelPosition Position Destination position
 function Entity:setMovementTarget(pixelPosition)
     local gridTarget = self.levelGrid:convertPositionToGrid(pixelPosition)
-    self:moveTo(
-        gridTarget, 
-        self.levelGrid:distanceBetweenEntities(self, {anchorTilePosition = gridTarget, sizeInTiles = {width = 1, height = 1}}) / self.speed
-    )
+    self:moveTo(gridTarget)
 end
 
 function Entity:draw()
