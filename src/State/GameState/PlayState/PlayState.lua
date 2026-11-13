@@ -45,17 +45,19 @@ function PlayState:init(def)
     
     self.camera = Camera()
     self.camera.speed = 1000
+    self.cursor = Cursor()
 
     self.player = Player {
         animations = ENTITIES['player'].animations,
         defaultAnimation = ENTITIES['player'].defaultAnimation,
         position = {
             x = self.mapSize.width / 2,
-            y = self.mapSize.height - self.gameMap.tileheight / 2
+            y = self.mapSize.height - ENTITIES['player'].size.height / 2
         },
         size = ENTITIES['player'].size,
         numberOnGrid = 1,
         levelGrid = self.levelGrid,
+        cursor = self.cursor
     }
 
     local stateMachine = StateMachine {
@@ -71,7 +73,9 @@ function PlayState:init(def)
             enemies = self.enemies,
             player = self.player,
             getScreenSize = PlayState.getScreenSize,
-            isCameraLocked = true
+            isCameraLocked = true,
+            levelGrid = self.levelGrid,
+            cursor = self.cursor
         }
     }
     self.stateStack = Stack {
@@ -117,6 +121,8 @@ function PlayState:draw()
         if self.showDebug then
             self.levelGrid:draw()
         end
+
+        self.cursor:drawEffect()
     self.camera:detach()
     self.stateStack:draw()
 end
