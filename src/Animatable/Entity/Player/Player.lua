@@ -15,20 +15,19 @@ function Player:init(def)
         },
         initialStateName = PlayerExploreState.getName(),
         initialStateParams = {
-            playerSpeed = self.speed,
-            setMovementTarget = function (position) self:setMovementTarget(position) end
+            setMovementTarget = function (position) self:setMovementTarget(position) end,
+            updateCursor = function (dt, params, canInput)
+                self:updateCursor(dt, params, canInput)
+            end
         }
     }
 
     self.cursor = def.cursor
 end
 
-function Player:update(dt, params, canInput)
+function Player:update(dt, params)
     Entity.update(self, dt)
-    if canInput then
-        self.stateMachine:update(dt, params)
-    end
-    self:updateCursor(dt, params, canInput)
+    self.stateMachine:update(dt, params)
 end
 
 function Player:updateCursor(dt, params, canInput)

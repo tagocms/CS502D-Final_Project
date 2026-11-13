@@ -37,9 +37,9 @@ function ExploreState:handleInput(dt, params)
     end
 
     if self:mouseIntersectsAnyView(params.realMousePosition) then
-        self.player:update(dt, params, false)
+        self.player:update(dt, push_with_keyvalue({canInput = false}, params))
     else
-        self.player:update(dt, params, true)
+        self.player:update(dt, push_with_keyvalue({canInput = true}, params))
     end
 end
 
