@@ -86,8 +86,10 @@ end
 ---Sets the player's movement target to the pixel position
 ---@param pixelPosition Position Destination position
 function Entity:setMovementTarget(pixelPosition)
-    local gridTarget = self.levelGrid:convertPositionToGrid(pixelPosition)
-    self:moveTo(gridTarget)
+    local gridTarget = self.levelGrid:tilePositionFromPixel(pixelPosition, self.sizeInTiles)
+    if self.levelGrid:isTilePositionValid(gridTarget) then
+        self:moveTo(gridTarget)
+    end
 end
 
 function Entity:draw()
@@ -95,20 +97,24 @@ function Entity:draw()
         local previousNode
         local tileSize = self.levelGrid._tileSize
         local tileWidth, tileHeight = tileSize.width, tileSize.height
+        local offsetCenter = {
+            x = self.size.width / 3,
+            y = self.size.height / 3
+        }
         for node, count in self.path:iter() do
             if previousNode then
                 love.graphics.line(
-                (previousNode:getX() - 1) * tileWidth + tileWidth / 2,
-                (previousNode:getY() - 1) * tileHeight + tileHeight / 2,
-                (node:getX() - 1) * tileWidth + tileWidth / 2,
-                (node:getY() - 1) * tileHeight + tileHeight / 2
+                (previousNode:getX() - 1) * tileWidth + tileWidth / 2 + offsetCenter.x,
+                (previousNode:getY() - 1) * tileHeight + tileHeight / 2 + offsetCenter.y,
+                (node:getX() - 1) * tileWidth + tileWidth / 2 + offsetCenter.x,
+                (node:getY() - 1) * tileHeight + tileHeight / 2 + offsetCenter.y
             )
             end
             previousNode = node
         end
     end
 
-    Animatable.draw(self)
+    Animatable.draw(self, 3, 3, self.size.width / 3, self.size.height / 3)
 end
 
 function Entity:getClassName()
