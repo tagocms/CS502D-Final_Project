@@ -48,8 +48,8 @@ ENTITIES = {
             height = 96
         },
         size = {
-            width = 28,
-            height = 28
+            width = 96,
+            height = 96
         },
         speed = 500
     },
@@ -102,8 +102,8 @@ ENTITIES = {
             height = 96
         },
         size = {
-            width = 28,
-            height = 28
+            width = 96,
+            height = 96
         }
     }
 }
