@@ -4,3 +4,4 @@ require 'src.utils.LevelGrid.index'
 require 'src.utils.Types.index'
 
 require 'src/utils/KeysPressed'
+require 'src/utils/Cursor'
