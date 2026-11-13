@@ -10,6 +10,9 @@ function ExploreState:init(def)
 
     self.isCameraLocked = def.isCameraLocked or false
     self:initializeViews()
+
+    self.levelGrid = def.levelGrid
+    self.cursor = def.cursor
 end
 
 function ExploreState:getLockCameraToggleButtonText()

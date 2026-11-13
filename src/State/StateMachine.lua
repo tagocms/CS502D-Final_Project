@@ -1,5 +1,5 @@
 ---@class StateMachine
----@field _availableStates string[]
+---@field _availableStates State[]
 ---@field currentState State
 ---@field callbacks function[]
 StateMachine = Class{}
