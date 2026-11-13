@@ -5,3 +5,4 @@ require 'src/State/StateMachine'
 
 require 'src.State.GameState.index'
 require 'src.State.EntityState.index'
+require 'src.State.CursorState.index'
